@@ -1,0 +1,334 @@
+@import "tailwindcss";
+
+@theme {
+  --color-emerald-50: var(--theme-color-50, #ecfdf5);
+  --color-emerald-100: var(--theme-color-100, #d1fae5);
+  --color-emerald-200: var(--theme-color-200, #a7f3d0);
+  --color-emerald-300: var(--theme-color-300, #6ee7b7);
+  --color-emerald-400: var(--theme-color-400, #34d399);
+  --color-emerald-500: var(--theme-color-500, #10b981);
+  --color-emerald-600: var(--theme-color-600, #059669);
+  --color-emerald-700: var(--theme-color-700, #047857);
+  --color-emerald-800: var(--theme-color-800, #065f46);
+  --color-emerald-900: var(--theme-color-900, #064e3b);
+  --color-emerald-950: var(--theme-color-950, #022c22);
+  --color-teal-400: var(--theme-color-300, #2dd4bf);
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+  
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* Utility to hide scrollbars while preserving scroll functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* Sleek minimalist scrollbars for POS views */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+/* Dark Mode Counter Screen Rules */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #0b0f19;
+  color: #f1f5f9;
+}
+
+/* High Contrast Counter Screen Enhancements */
+html.dark input,
+html.dark select,
+html.dark textarea {
+  color-scheme: dark;
+}
+
+/* High Contrast Mode for Counter/Cashier Screens */
+html.high-contrast body {
+  letter-spacing: 0.01em;
+}
+
+html.high-contrast button,
+html.high-contrast input,
+html.high-contrast select,
+html.high-contrast [role="button"] {
+  border-width: 1.5px !important;
+}
+
+html.dark.high-contrast .bg-slate-900\/60,
+html.dark.high-contrast .bg-slate-800 {
+  background-color: #0f172a !important;
+  border-color: #475569 !important;
+}
+
+html.dark.high-contrast .text-slate-400 {
+  color: #cbd5e1 !important;
+}
+
+html.dark.high-contrast .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+html.dark.high-contrast .font-mono {
+  font-weight: 600 !important;
+}
+
+/* ==========================================================================
+   FORMATO DE IMPRESIÓN TÉRMICA DE TICKETS (80mm / 58mm)
+   Optimizado para impresoras térmicas POS (Epson, Star, Bixolon, Xprinter, etc.)
+   Incluye: Desglose claro de Impuestos (IVA), Códigos QR de Contacto y Códigos de Barras
+   ========================================================================== */
+
+/* Reglas generales para la vista previa en pantalla del ticket */
+.ticket-tax-breakdown {
+  width: 100%;
+  font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
+}
+
+.ticket-qr-section {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 0mm;
+  }
+
+  html, body {
+    width: 80mm !important;
+    min-width: 80mm !important;
+    max-width: 80mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ocultar todos los elementos de la interfaz de usuario */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Mostrar únicamente el contenedor del ticket térmico */
+  #printable-ticket,
+  #printable-ticket * {
+    visibility: visible;
+  }
+
+  #printable-ticket {
+    position: absolute !important;
+    left: 2mm !important;
+    top: 0 !important;
+    width: 76mm !important;
+    max-width: 76mm !important;
+    margin: 0 !important;
+    padding: 1.5mm 1mm 10mm 1mm !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    font-family: 'JetBrains Mono', 'Courier New', Courier, monospace !important;
+    font-size: 10.5px !important;
+    line-height: 1.25 !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+    text-rendering: optimizeLegibility !important;
+  }
+
+  /* Ajuste específico para rollos angostos de 58mm (mini / bluetooth) */
+  #printable-ticket.ticket-58mm {
+    left: 1mm !important;
+    width: 54mm !important;
+    max-width: 54mm !important;
+    font-size: 9px !important;
+    line-height: 1.15 !important;
+    padding: 1mm 0.5mm 8mm 0.5mm !important;
+  }
+
+  #printable-ticket.ticket-58mm .ticket-tax-table {
+    font-size: 8.5px !important;
+  }
+
+  #printable-ticket.ticket-58mm .ticket-qr-image {
+    width: 85px !important;
+    height: 85px !important;
+  }
+
+  /* ------------------------------------------------------------------------
+     DESGLOSE DE IMPUESTOS (IVA) EN IMPRESIÓN TÉRMICA
+     Formato de alta legibilidad con bordes nítidos de 1px puro #000000
+     ------------------------------------------------------------------------ */
+  .ticket-tax-breakdown {
+    display: block !important;
+    width: 100% !important;
+    margin: 3px 0 !important;
+    padding: 3px 0 !important;
+    border-top: 1px dashed #000000 !important;
+    border-bottom: 1px dashed #000000 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .ticket-tax-title {
+    font-weight: 800 !important;
+    font-size: 10px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    text-align: center !important;
+    margin-bottom: 3px !important;
+    color: #000000 !important;
+  }
+
+  .ticket-tax-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 9.5px !important;
+    color: #000000 !important;
+  }
+
+  .ticket-tax-table th {
+    border-bottom: 1px dotted #000000 !important;
+    padding: 2px 1px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    font-size: 8.5px !important;
+  }
+
+  .ticket-tax-table td {
+    padding: 1.5px 1px !important;
+    vertical-align: middle !important;
+  }
+
+  .ticket-tax-badge {
+    display: inline-block !important;
+    font-weight: 700 !important;
+    border: 1px solid #000000 !important;
+    padding: 0 2px !important;
+    font-size: 8px !important;
+    line-height: 1 !important;
+    margin-right: 2px !important;
+  }
+
+  .ticket-tax-total-row {
+    border-top: 1px dotted #000000 !important;
+    font-weight: 800 !important;
+  }
+
+  /* ------------------------------------------------------------------------
+     CÓDIGO QR DE CONTACTO AL FINAL DEL TICKET
+     Configuración para renderizado pixelado monocromático sin desenfoque
+     ------------------------------------------------------------------------ */
+  .ticket-qr-section {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    margin: 4mm 0 2mm 0 !important;
+    padding-top: 3mm !important;
+    border-top: 1px dashed #000000 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .ticket-qr-box {
+    background-color: #ffffff !important;
+    padding: 2px !important;
+    border: 1px solid #000000 !important;
+    display: inline-block !important;
+    margin: 0 auto !important;
+  }
+
+  .ticket-qr-image {
+    display: block !important;
+    margin: 0 auto !important;
+    image-rendering: pixelated !important;
+    image-rendering: -moz-crisp-edges !important;
+    image-rendering: crisp-edges !important;
+    filter: contrast(300%) grayscale(100%) !important;
+    background-color: #ffffff !important;
+  }
+
+  .ticket-qr-caption {
+    font-weight: 800 !important;
+    font-size: 9px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.3px !important;
+    margin-top: 2mm !important;
+    line-height: 1.2 !important;
+    color: #000000 !important;
+  }
+
+  .ticket-qr-subtext {
+    font-size: 8px !important;
+    color: #000000 !important;
+    margin-top: 1mm !important;
+    word-break: break-all !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Líneas divisorias térmicas */
+  .ticket-divider-double {
+    border-top: 3px double #000000 !important;
+    margin: 2mm 0 !important;
+  }
+
+  .ticket-divider-dashed {
+    border-top: 1px dashed #000000 !important;
+    margin: 2mm 0 !important;
+  }
+
+  .ticket-divider-dotted {
+    border-top: 1px dotted #000000 !important;
+    margin: 2mm 0 !important;
+  }
+
+  /* Evitar rupturas de página dentro de bloques del ticket */
+  .ticket-item-row,
+  .ticket-totals-box,
+  .ticket-payment-box,
+  .ticket-header-box,
+  .ticket-barcode-box,
+  .ticket-footer-box {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
+

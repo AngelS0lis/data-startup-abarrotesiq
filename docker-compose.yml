@@ -1,0 +1,7 @@
+# Orquestación local de servicios AbarrotesIQ (Se implementa en E3)
+version: "3.9"
+services:
+  # Se definirán en E2/E3: ingesta (FastAPI), worker, modelos y tablero (Streamlit)
+  placeholder:
+    image: alpine:latest
+    command: ["echo", "AbarrotesIQ - Estructura inicial E0 lista"]

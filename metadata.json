@@ -1,0 +1,7 @@
+{
+  "name": "Punto de Venta Abarrotes",
+  "description": "Sistema de punto de venta (POS) para tiendas de abarrotes con cobro rápido, inventario, código de barras, venta a granel, corte de caja, libreta de fiados, persistencia offline con IndexedDB, reintento de sincronización con Google Sheets y dashboard analítico.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

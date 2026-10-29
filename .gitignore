@@ -5,7 +5,6 @@ coverage/
 .DS_Store
 *.log
 .env*
-!.env.example
 
 # Credenciales y secretos de nube (NUNCA subir al repositorio)
 firebase-applet-config.json

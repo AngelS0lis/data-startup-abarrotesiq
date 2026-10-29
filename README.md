@@ -7,6 +7,7 @@
 
 * **Negocio Aliado Real:** **Abarrotes "Judith"**
 * **Autor (Cloud Lead & Data Lead):** Adolfo Angel Solis Hernández (`@AngelS0lis`)
+* **Repositorio Oficial:** [https://github.com/AngelS0lis/data-startup-abarrotesiq](https://github.com/AngelS0lis/data-startup-abarrotesiq)
 * **Proveedor Cloud:** Amazon Web Services (AWS) — Presupuesto FinOps `$0.00 MXN`
 
 ---
@@ -14,11 +15,12 @@
 ## 📂 Estructura del Repositorio
 
 ```text
-pointsale/ (AbarrotesIQ)
+data-startup-abarrotesiq/
 ├── README.md                                  # Qué es, cómo se levanta y enlaces a entregables
 ├── docs/
 │   ├── E0-propuesta.md                        # Entregable E0: Lean Canvas, entrevista, cadena de preguntas e inventario
-│   └── img/                                   # Capturas de evidencia (alerta de presupuesto AWS, diagramas)
+│   ├── E1-dashboard.md                        # Entregable E1: Limpieza, 6 gráficas, FFT, S3 e IAM
+│   └── img/                                   # Capturas de evidencia (alerta de presupuesto AWS, S3, IAM, diagramas)
 ├── data/
 │   ├── raw/
 │   │   └── gastos_proveedores_libreta1.csv    # Dataset real digitalizado de la Libreta #1 (1,151 registros)
@@ -44,8 +46,8 @@ pointsale/ (AbarrotesIQ)
 | Entregable | Estado | Documento / Enlace |
 | :--- | :---: | :--- |
 | **E0 · Propuesta** | ✅ Completado | [`docs/E0-propuesta.md`](docs/E0-propuesta.md) |
-| **E1 · Dashboard empresarial** | 🔜 Próximo | `services/tablero/` |
-| **E2 · Cimientos en la nube** | ⏳ Pendiente | `services/ingesta/`, `services/worker/` |
+| **E1 · Dashboard empresarial** | ✅ Completado | [`docs/E1-dashboard.md`](docs/E1-dashboard.md) · [`services/tablero/app.py`](services/tablero/app.py) |
+| **E2 · Cimientos en la nube** | 🔜 Próximo | `services/ingesta/`, `services/worker/` |
 | **E3 · Inteligencia en producción** | ⏳ Pendiente | `services/modelos/`, `infra/terraform/`, `k8s/` |
 | **E4 · Blindaje** | ⏳ Pendiente | Auditoría y validación walk-forward |
 | **E5 · Demo Day** | ⏳ Pendiente | Pitch, costos y demo en vivo |

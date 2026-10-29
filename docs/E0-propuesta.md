@@ -11,7 +11,7 @@
 | **Cliente / Negocio Aliado Real** | **Abarrotes "Judith"** *(Giro: Tienda de abarrotes, cremería y perecederos; colonia reservada por privacidad conforme a la LFPDPPP)* |
 | **Integrante (Cloud Lead & Data Lead)** | **Adolfo Angel Solis Hernández** (`@AngelS0lis`) |
 | **Proveedor de Nube Elegido** | **Amazon Web Services (AWS)** — Región `us-east-1` (AWS Free Tier / AWS Academy) |
-| **Repositorio Oficial** | `https://github.com/AngelS0lis/pointsale` *(estructura `data-startup` integrada)* |
+| **Repositorio Oficial** | `https://github.com/AngelS0lis/data-startup-abarrotesiq` |
 
 ---
 
@@ -190,7 +190,7 @@ Configurando todos los recursos en la región **`us-east-1` (N. Virginia)** para
 El repositorio cuenta desde este entregable `e0` con la arquitectura modular requerida para todo el semestre, coexistiendo con el frontend del Punto de Venta (`src/`):
 
 ```text
-pointsale/ (AbarrotesIQ)
+data-startup-abarrotesiq/
 ├── README.md                                  # Descripción general, arquitectura y guía de arranque
 ├── docs/
 │   └── E0-propuesta.md                        # Este documento de propuesta y validación (E0)

@@ -32,13 +32,14 @@ import plotly.graph_objects as go
 import streamlit as st
 from dotenv import load_dotenv
 
-# Permitir importar el módulo de limpieza si se ejecuta en modo fallback local
+# Permitir importar los módulos de limpieza (worker) y modelos (series y regresión E2)
 RAIZ_PROYECTO = Path(__file__).resolve().parents[2]
 sys.path.append(str(RAIZ_PROYECTO / "services" / "worker"))
+sys.path.append(str(RAIZ_PROYECTO / "services" / "modelos"))
 load_dotenv(RAIZ_PROYECTO / ".env")
 
 st.set_page_config(
-    page_title="AbarrotesIQ · Tablero Empresarial (E1)",
+    page_title="AbarrotesIQ · Tablero Empresarial v2 (E1 + E2)",
     page_icon="🛒",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -614,3 +615,174 @@ with rec3:
         "máximo de miércoles y jueves (**máximo 75 piezas de bolillo** en lugar de las 100+ del lunes) para que, "
         "sin importar cuál de las 3 empleadas esté en turno, no se compre pan de más ni se haga duro."
     )
+
+st.markdown("---")
+
+# --- 6. TABLERO V2 (ENTREGABLE E2: REGRESIÓN POR MÍNIMOS CUADRADOS Y SERIES DE TIEMPO) ---
+st.header("🚀 Tablero v2 (Entregable E2) · Series de Tiempo y Regresión por Mínimos Cuadrados")
+st.markdown(
+    "Integra la **descomposición de la serie de tiempo**, la **prueba de estacionariedad (ADF)**, "
+    "las funciones **ACF / PACF** y la **Regresión Lineal por Mínimos Cuadrados** implementada a mano con "
+    "**NumPy** ($\\hat{\\boldsymbol{\\beta}} = (\\mathbf{X}^\\top \\mathbf{X})^{-1}\\mathbf{X}^\\top \\mathbf{y}$) "
+    "comparada contra **scikit-learn**."
+)
+
+from series_y_regresion import (
+    comparar_numpy_vs_sklearn,
+    descomponer_serie_tiempo,
+    prueba_adf_estacionariedad,
+    calcular_acf_pacf,
+)
+from plotly.subplots import make_subplots
+
+if len(df) >= 15:
+    res_reg = comparar_numpy_vs_sklearn(df)
+    df_dia_reg = res_reg["df_diario_regresion"]
+    df_dia_reg["fecha_dt"] = pd.to_datetime(df_dia_reg["fecha"])
+    df_desc = descomponer_serie_tiempo(df, periodo=7)
+    res_adf = prueba_adf_estacionariedad(df_desc["observado"])
+    df_acf_pacf = calcular_acf_pacf(df_desc["observado"], nlags=21)
+
+    tab_e2_reg, tab_e2_desc, tab_e2_acf = st.tabs([
+        "📐 1. Regresión Mínimos Cuadrados (NumPy vs. scikit-learn) y Residuos",
+        "🌊 2. Descomposición de la Serie de Tiempo (Tendencia, Estacionalidad y Residuo)",
+        "📊 3. Estacionariedad (Prueba ADF) y Autocorrelación (ACF y PACF)",
+    ])
+
+    with tab_e2_reg:
+        m_dia_np = res_reg["modelo_diario"]["metricas_numpy"]
+        m_dia_sk = res_reg["modelo_diario"]["metricas_sklearn"]
+        diff_max = res_reg["modelo_diario"]["diferencia_max_abs"]
+
+        c_m1, c_m2, c_m3, c_m4, c_m5 = st.columns(5)
+        c_m1.metric("MSE (NumPy / sklearn)", f"{m_dia_np['MSE']:,.2f}")
+        c_m2.metric("RMSE (Error Medio)", f"${m_dia_np['RMSE']:,.2f} MXN")
+        c_m3.metric("MAE (Error Absoluto)", f"${m_dia_np['MAE']:,.2f} MXN")
+        c_m4.metric("Coeficiente R²", f"{m_dia_np['R2']:.4f}")
+        c_m5.metric("Máx |β_NumPy - β_sklearn|", f"{diff_max:.2e}")
+
+        col_reg1, col_reg2 = st.columns(2)
+        with col_reg1:
+            fig_reg_serie = go.Figure()
+            fig_reg_serie.add_trace(
+                go.Scatter(
+                    x=df_dia_reg["fecha_dt"],
+                    y=df_dia_reg["gasto_diario"],
+                    mode="lines+markers",
+                    name="Gasto Diario Observado",
+                    line=dict(color="#94a3b8", width=1.4),
+                    marker=dict(size=4),
+                )
+            )
+            fig_reg_serie.add_trace(
+                go.Scatter(
+                    x=df_dia_reg["fecha_dt"],
+                    y=df_dia_reg["tendencia_lineal_numpy"],
+                    mode="lines",
+                    name="Línea de Tendencia OLS (β₀ + β₁·t)",
+                    line=dict(color="#dc2626", width=2.8, dash="dash"),
+                )
+            )
+            fig_reg_serie.add_trace(
+                go.Scatter(
+                    x=df_dia_reg["fecha_dt"],
+                    y=df_dia_reg["prediccion_multivariada_numpy"],
+                    mode="lines",
+                    name=f"Predictor Lineal NumPy (R² = {m_dia_np['R2']:.2f})",
+                    line=dict(color="#2563eb", width=2.2),
+                )
+            )
+            fig_reg_serie.update_layout(
+                title="Línea de Tendencia de la Regresión y Predictor por Mínimos Cuadrados",
+                xaxis_title="Fecha",
+                yaxis_title="Gasto Diario (MXN)",
+                height=390,
+            )
+            st.plotly_chart(fig_reg_serie, use_container_width=True)
+
+        with col_reg2:
+            fig_res = px.scatter(
+                df_dia_reg,
+                x="prediccion_multivariada_numpy",
+                y="residuo_diario",
+                hover_data=["fecha", "gasto_diario"],
+                color_discrete_sequence=["#7c3aed"],
+                labels={
+                    "prediccion_multivariada_numpy": "Valor Predicho ŷ (MXN)",
+                    "residuo_diario": "Residuo e = y - ŷ (MXN)",
+                },
+            )
+            fig_res.add_hline(y=0.0, line_dash="dash", line_color="#ef4444")
+            fig_res.update_layout(
+                title=(
+                    f"Análisis de Residuos (Media = {res_reg['modelo_diario']['residuos_media']:.2e} ≈ 0, "
+                    f"σ_e = ${res_reg['modelo_diario']['residuos_std']:.1f} MXN)"
+                ),
+                height=390,
+            )
+            st.plotly_chart(fig_res, use_container_width=True)
+
+        df_comp_betas = pd.DataFrame({
+            "Parámetro / Variable": res_reg["modelo_diario"]["variables"],
+            "β Ecuación Normal NumPy ((XᵀX)⁻¹Xᵀy)": res_reg["modelo_diario"]["beta_numpy"],
+            "β scikit-learn (LinearRegression)": res_reg["modelo_diario"]["beta_sklearn"],
+        })
+        st.dataframe(df_comp_betas, use_container_width=True, hide_index=True)
+
+    with tab_e2_desc:
+        fig_desc = make_subplots(
+            rows=4,
+            cols=1,
+            shared_xaxes=True,
+            vertical_spacing=0.06,
+            subplot_titles=(
+                "1. Serie Observada Regularizada Y(t) [MXN]",
+                "2. Componente de Tendencia T(t) [Media Móvil Centrada 7 días]",
+                "3. Componente Estacional Semanal S(t) [Ciclo p = 7 días]",
+                "4. Componente Residual R(t) = Y(t) - T(t) - S(t)",
+            ),
+        )
+        fig_desc.add_trace(
+            go.Scatter(x=df_desc["fecha"], y=df_desc["observado"], name="Observado", line=dict(color="#1e293b")),
+            row=1, col=1,
+        )
+        fig_desc.add_trace(
+            go.Scatter(x=df_desc["fecha"], y=df_desc["tendencia"], name="Tendencia", line=dict(color="#2563eb", width=2.5)),
+            row=2, col=1,
+        )
+        fig_desc.add_trace(
+            go.Scatter(x=df_desc["fecha"], y=df_desc["estacionalidad"], name="Estacionalidad (7d)", line=dict(color="#059669")),
+            row=3, col=1,
+        )
+        fig_desc.add_trace(
+            go.Scatter(x=df_desc["fecha"], y=df_desc["residuo"], mode="lines+markers", name="Residuo", line=dict(color="#dc2626", width=1), marker=dict(size=3)),
+            row=4, col=1,
+        )
+        fig_desc.update_layout(height=680, showlegend=False, title_text="Descomposición Aditiva de la Serie de Tiempo: Y(t) = T(t) + S(t) + R(t)")
+        st.plotly_chart(fig_desc, use_container_width=True)
+
+    with tab_e2_acf:
+        c_adf1, c_adf2, c_adf3, c_adf4 = st.columns(4)
+        c_adf1.metric("Estadístico ADF (τ)", f"{res_adf['estadistico_adf']:.4f}")
+        c_adf2.metric("Valor p (p-value)", f"{res_adf['p_value']:.5f}")
+        c_adf3.metric("Valor Crítico al 5%", f"{res_adf['valores_criticos'].get('5%', -2.88):.2f}")
+        c_adf4.metric("¿Es Estacionaria?", "✅ SÍ (Rechaza H₀)" if res_adf["es_estacionaria_al_5pct"] else "⚠️ Requiere d=1")
+        st.info(f"**Conclusión de la Prueba Dickey-Fuller Aumentada (ADF):** {res_adf['conclusion']}")
+
+        col_acf, col_pacf = st.columns(2)
+        with col_acf:
+            fig_acf = go.Figure()
+            fig_acf.add_trace(go.Bar(x=df_acf_pacf["rezago_k"], y=df_acf_pacf["ACF"], name="ACF", marker_color="#2563eb"))
+            fig_acf.add_trace(go.Scatter(x=df_acf_pacf["rezago_k"], y=df_acf_pacf["limite_ic_sup"], mode="lines", line=dict(color="#ef4444", dash="dash"), name="IC 95% (+1.96/√N)"))
+            fig_acf.add_trace(go.Scatter(x=df_acf_pacf["rezago_k"], y=df_acf_pacf["limite_ic_inf"], mode="lines", line=dict(color="#ef4444", dash="dash"), name="IC 95% (-1.96/√N)"))
+            fig_acf.update_layout(title="Función de Autocorrelación (ACF) hasta k = 21 días", xaxis_title="Rezago k (días)", yaxis_title="ACF r(k)", height=360)
+            st.plotly_chart(fig_acf, use_container_width=True)
+
+        with col_pacf:
+            fig_pacf = go.Figure()
+            fig_pacf.add_trace(go.Bar(x=df_acf_pacf["rezago_k"], y=df_acf_pacf["PACF"], name="PACF", marker_color="#059669"))
+            fig_pacf.add_trace(go.Scatter(x=df_acf_pacf["rezago_k"], y=df_acf_pacf["limite_ic_sup"], mode="lines", line=dict(color="#ef4444", dash="dash"), name="IC 95% (+1.96/√N)"))
+            fig_pacf.add_trace(go.Scatter(x=df_acf_pacf["rezago_k"], y=df_acf_pacf["limite_ic_inf"], mode="lines", line=dict(color="#ef4444", dash="dash"), name="IC 95% (-1.96/√N)"))
+            fig_pacf.update_layout(title="Función de Autocorrelación Parcial (PACF) hasta k = 21 días", xaxis_title="Rezago k (días)", yaxis_title="PACF φ_kk", height=360)
+            st.plotly_chart(fig_pacf, use_container_width=True)
+

@@ -1,7 +1,60 @@
-# Orquestación local de servicios AbarrotesIQ (Se implementa en E3)
-version: "3.9"
+# Orquestación de microservicios y base de datos AbarrotesIQ (Entregables E2 y E3)
 services:
-  # Se definirán en E2/E3: ingesta (FastAPI), worker, modelos y tablero (Streamlit)
-  placeholder:
-    image: alpine:latest
-    command: ["echo", "AbarrotesIQ - Estructura inicial E0 lista"]
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: abarrotesiq-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-abarrotes}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-abarrotes_local_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-abarrotesiq_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_abarrotesiq:/var/lib/postgresql/data
+      - ./services/worker/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+
+  ingesta:
+    build:
+      context: .
+      dockerfile: services/ingesta/Dockerfile
+    container_name: abarrotesiq-ingesta
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+
+  worker:
+    build:
+      context: .
+      dockerfile: services/worker/Dockerfile
+    container_name: abarrotesiq-worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - postgres_db
+      - ingesta
+    volumes:
+      - ./data:/app/data
+
+  tablero:
+    build:
+      context: .
+      dockerfile: services/tablero/Dockerfile
+    container_name: abarrotesiq-tablero
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8501:8501"
+    depends_on:
+      - postgres_db
+    volumes:
+      - ./data:/app/data
+
+volumes:
+  pgdata_abarrotesiq:

@@ -1,0 +1,35 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "LecturaExclusivaZonaRawS3",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": "arn:aws:s3:::abarrotesiq-datalake-judith/raw/*"
+    },
+    {
+      "Sid": "EscrituraExclusivaZonaCleanS3",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject"
+      ],
+      "Resource": "arn:aws:s3:::abarrotesiq-datalake-judith/clean/*"
+    },
+    {
+      "Sid": "ConsumoColaIngestaYEnvioDLQ",
+      "Effect": "Allow",
+      "Action": [
+        "sqs:ReceiveMessage",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:SendMessage"
+      ],
+      "Resource": [
+        "arn:aws:sqs:us-east-1:*:abarrotesiq-ingesta-queue",
+        "arn:aws:sqs:us-east-1:*:abarrotesiq-ingesta-dlq"
+      ]
+    }
+  ]
+}

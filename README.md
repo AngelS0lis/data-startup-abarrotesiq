@@ -20,7 +20,8 @@ data-startup-abarrotesiq/
 ├── docs/
 │   ├── E0-propuesta.md                        # Entregable E0: Lean Canvas, entrevista, cadena de preguntas e inventario
 │   ├── E1-dashboard.md                        # Entregable E1: Limpieza, 6 gráficas, FFT, S3 e IAM
-│   └── img/                                   # Capturas de evidencia (alerta de presupuesto AWS, S3, IAM, diagramas)
+│   ├── E2-cimientos.md                        # Entregable E2: API FastAPI, SQS, Worker, PostgreSQL, Series y Regresión OLS
+│   └── img/                                   # Capturas de evidencia (alerta de presupuesto AWS, S3, IAM, SQS, diagramas)
 ├── data/
 │   ├── raw/
 │   │   └── gastos_proveedores_libreta1.csv    # Dataset real digitalizado de las Libretas #1 y #2 (1,568 registros)
@@ -47,10 +48,9 @@ data-startup-abarrotesiq/
 | Entregable | Estado | Documento / Enlace |
 | :--- | :---: | :--- |
 | **E0 · Propuesta** | ✅ Completado | [`docs/E0-propuesta.md`](docs/E0-propuesta.md) |
-| **Avance 1 · Definición del Problema y EDA (Analítica de Datos · 10/40 pts)** | ✅ Completado | [`notebooks/Avance1_EDA_AbarrotesIQ.ipynb`](notebooks/Avance1_EDA_AbarrotesIQ.ipynb) |
 | **E1 · Dashboard empresarial** | ✅ Completado | [`docs/E1-dashboard.md`](docs/E1-dashboard.md) · [`services/tablero/app.py`](services/tablero/app.py) |
-| **E2 · Cimientos en la nube** | 🔜 Próximo | `services/ingesta/`, `services/worker/` |
-| **E3 · Inteligencia en producción** | ⏳ Pendiente | `services/modelos/`, `infra/terraform/`, `k8s/` |
+| **E2 · Cimientos en la nube** | ✅ Completado | [`docs/E2-cimientos.md`](docs/E2-cimientos.md) · [`services/ingesta/main.py`](services/ingesta/main.py) · [`services/worker/worker.py`](services/worker/worker.py) · [`services/modelos/series_y_regresion.py`](services/modelos/series_y_regresion.py) |
+| **E3 · Inteligencia en producción** | 🔜 Próximo | `services/modelos/`, `infra/terraform/`, `k8s/` |
 | **E4 · Blindaje** | ⏳ Pendiente | Auditoría y validación walk-forward |
 | **E5 · Demo Day** | ⏳ Pendiente | Pitch, costos y demo en vivo |
 

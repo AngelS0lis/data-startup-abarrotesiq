@@ -23,10 +23,11 @@ data-startup-abarrotesiq/
 │   └── img/                                   # Capturas de evidencia (alerta de presupuesto AWS, S3, IAM, diagramas)
 ├── data/
 │   ├── raw/
-│   │   └── gastos_proveedores_libreta1.csv    # Dataset real digitalizado de la Libreta #1 (1,151 registros)
+│   │   └── gastos_proveedores_libreta1.csv    # Dataset real digitalizado de las Libretas #1 y #2 (1,568 registros)
 │   └── sample/
 │       └── gastos_proveedores_sample.csv      # Muestra pequeña y anonimizada (100 registros)
-├── notebooks/                                 # Exploración, preprocesamiento y entrenamiento de modelos
+├── notebooks/
+│   └── Avance1_EDA_AbarrotesIQ.ipynb          # Avance 1 (Analítica de Datos): Definición, Dataset y EDA en Jupyter
 ├── services/
 │   ├── ingesta/                               # Microservicio API FastAPI + Dockerfile (E2-E3)
 │   ├── worker/                                # Limpieza automatizada / AWS Lambda (E2-E3)
@@ -46,6 +47,7 @@ data-startup-abarrotesiq/
 | Entregable | Estado | Documento / Enlace |
 | :--- | :---: | :--- |
 | **E0 · Propuesta** | ✅ Completado | [`docs/E0-propuesta.md`](docs/E0-propuesta.md) |
+| **Avance 1 · Definición del Problema y EDA (Analítica de Datos · 10/40 pts)** | ✅ Completado | [`notebooks/Avance1_EDA_AbarrotesIQ.ipynb`](notebooks/Avance1_EDA_AbarrotesIQ.ipynb) |
 | **E1 · Dashboard empresarial** | ✅ Completado | [`docs/E1-dashboard.md`](docs/E1-dashboard.md) · [`services/tablero/app.py`](services/tablero/app.py) |
 | **E2 · Cimientos en la nube** | 🔜 Próximo | `services/ingesta/`, `services/worker/` |
 | **E3 · Inteligencia en producción** | ⏳ Pendiente | `services/modelos/`, `infra/terraform/`, `k8s/` |

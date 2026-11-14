@@ -256,19 +256,20 @@ with st.expander("🧹 Ver Reporte de Limpieza Automatizada (`raw/` → `clean/`
     c_rep1, c_rep2, c_rep3, c_rep4, c_rep5, c_rep6 = st.columns(6)
     c_rep1.metric("1. Duplicados eliminados", reporte_limpieza.get("duplicados_eliminados", 15))
     c_rep2.metric("2. Valores faltantes (NaN)", reporte_limpieza.get("faltantes_corregidos", 18))
-    c_rep3.metric("3. Tipos y sinónimos", reporte_limpieza.get("tipos_y_formato_corregidos", 81))
+    c_rep3.metric("3. Tipos y sinónimos", reporte_limpieza.get("tipos_y_formato_corregidos", 106))
     c_rep4.metric("4. Errores lógicos (< 0)", reporte_limpieza.get("errores_logicos_corregidos", 14))
-    c_rep5.metric("5. Valores atípicos (IQR)", reporte_limpieza.get("atipicos_corregidos", 19))
+    c_rep5.metric("5. Valores atípicos (IQR)", reporte_limpieza.get("atipicos_corregidos", 11))
     c_rep6.metric(
         "✅ Total registros limpios",
         f"{reporte_limpieza.get('registros_finales_limpios', len(df_completo)):,}",
-        delta=f"{reporte_limpieza.get('total_correcciones_aplicadas', 147)} correcciones",
+        delta=f"{reporte_limpieza.get('total_correcciones_aplicadas', 164)} correcciones",
     )
     st.caption(
-        "**Detalle de homologación real en libreta:** Se eliminó la columna fantasma producida por la coma final del CSV, "
-        "se reparó la fecha truncada `28/2026` → `28/08/2026` y se unificaron 24 variantes ortográficas manuales "
-        "(`agua_ciel_garrafones`/`garrafones_ciel` → `agua_ciel`, `sc` → `tortillas_sagrado_corazon`, `pan_hacienda` → `pan`, "
-        "`sopitos_mirador`/`sopes_resto` → `sopes_mirador`)."
+        "**Detalle de homologación real en las Libretas #1 y #2:** Se eliminó la columna vacía del CSV, "
+        "se reparó la fecha truncada `28/2026` → `28/08/2026` y se unificaron 36 variantes ortográficas y sinónimos manuales "
+        "en 90 registros (`tomales` → `tamales`, `nutrioly` → `nutrioli`, `los_cuates` → `leche_cuates`, `don_alberto` → `verdura`, "
+        "`agua_ciel_garrafones`/`garrafones` → `agua_ciel`, `sc` → `tortillas_sagrado_corazon`, `pan_hacienda` → `pan`, "
+        "`sopitos`/`sopitos_mirador`/`sopes_resto` → `sopes_mirador`)."
     )
 
 # --- 3. LAS 6 VISUALIZACIONES OBLIGATORIAS ---

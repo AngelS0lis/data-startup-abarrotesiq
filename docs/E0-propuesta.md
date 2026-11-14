@@ -96,13 +96,13 @@ flowchart LR
 ### 3.1 Fuentes de Datos e Integración
 1. **Fuente Primaria Real (Ya capturada en el repositorio):**
    * **Archivo:** [`data/raw/gastos_proveedores_libreta1.csv`](file:///c:/Users/angel/TecNM/Computo%20en%20la%20Nube/pointsale/data/raw/gastos_proveedores_libreta1.csv) (y muestra pública en [`data/sample/gastos_proveedores_sample.csv`](file:///c:/Users/angel/TecNM/Computo%20en%20la%20Nube/pointsale/data/sample/gastos_proveedores_sample.csv)).
-   * **Origen:** Digitalización fiel de la **Libreta #1** de pagos diarios a proveedores de **Abarrotes "Judith"**.
-   * **Privacidad (LFPDPPP):** El conjunto de datos registra exclusivamente transacciones comerciales de insumos y marcas proveedoras (`bolillo`, `tortillas_mirador`, `frijoles_pato`, etc.); no contiene nombres de clientes, teléfonos ni domicilios particulares.
+   * **Origen:** Digitalización fiel de las **Libretas #1 (1,151 registros) y #2 (417 registros)** de pagos diarios a proveedores de **Abarrotes "Judith"**.
+   * **Privacidad (LFPDPPP):** El conjunto de datos registra exclusivamente transacciones comerciales de insumos y marcas proveedoras (`bolillo`, `tortillas_mirador`, `frijoles_pato`, `tamales`, `agua_real`, etc.); no contiene nombres de clientes, teléfonos ni domicilios particulares.
 2. **Estrategia de Volumen y Expansión (>5,000 registros / 12+ meses):**
-   * La Libreta #1 digitalizada abarca **1,151 registros reales** de compras a proveedores entre el **05/06/2026 y el 23/10/2026** (121 días operativos de lunes a sábado, acumulando **\$276,845.00 MXN** en compras reales distribuidas en **67 etiquetas de productos/proveedores**).
+   * Las Libretas #1 y #2 digitalizadas abarcan **1,568 registros reales** de compras a proveedores entre el **05/06/2026 y el 23/10/2026** (122 días operativos, acumulando **\$330,461.50 MXN** en compras reales distribuidas en **118 etiquetas crudas de productos/proveedores** que se homologan a **82 proveedores únicos**).
    * Para cumplir rigurosamente el umbral volumétrico de la rúbrica ($\ge 5,000$ registros o $\ge 12$ meses diarios) manteniendo el valor de trabajar con un negocio real:
-     1. **Datos Reales de Base:** Se conserva íntegro el dataset real de la Libreta #1 (`1,151` registros) como conjunto de referencia validado en campo.
-     2. **Cruce con Transacciones del POS (`pointsale`) y Expansión Histórica Calibrada:** En la fase de ingesta (E1/E2) se incorpora el conjunto extendido (>6,500 registros y >12 meses diarios) que integra la reconstrucción histórica de los 2 turnos restantes y el desglose de tickets diarios de venta generados con los parámetros estadísticos reales de **Abarrotes "Judith"** ($\lambda$ de Poisson ajustado a la media y varianza real de sus productos estrella: Bolillo, Tortillas Mirador, Pan, Tortillas Sagrado Corazón, Frijoles y Lácteos).
+     1. **Datos Reales de Base:** Se conserva íntegro el dataset real de las Libretas #1 y #2 (`1,568` registros) como conjunto de referencia validado en campo y utilizado en el **Avance 1 de Analítica de Datos (EDA)** (`notebooks/Avance1_EDA_AbarrotesIQ.ipynb`).
+     2. **Cruce con Transacciones del POS (`pointsale`) y Expansión Histórica Calibrada:** En la fase de ingesta (E1/E2) se incorpora el conjunto extendido (>6,500 registros y >12 meses diarios) que integra la reconstrucción histórica de los turnos y el desglose de tickets diarios de venta generados con los parámetros estadísticos reales de **Abarrotes "Judith"** ($\lambda$ de Poisson ajustado a la media y varianza real de sus productos estrella: Bolillo, Tortillas Mirador, Pan, Tortillas Sagrado Corazón, Frijoles, Tamales y Lácteos).
 
 ### 3.2 Diccionario de Datos y Tipología Estadística (Analítica Unidad 1.1)
 
@@ -128,30 +128,34 @@ flowchart LR
 | `total` | `float64` / `NUMERIC(10,2)` | **Numérica Continua** | **De Razón** | Ingreso bruto de la línea de venta ($\text{unidades} \times \text{precio\_unitario}$). |
 | `empleada_turno` | `string` / `VARCHAR(20)` | **Categórica** | **Nominal** | Identificador anonimizado del turno/empleada (`EMP_01_MAT`, `EMP_02_VESP`, `EMP_03_COMODIN`). |
 
-### 3.3 Radiografía Preliminar del CSV Real y Errores Detectados para Limpieza en E1
-Al perfilar los **1,151 registros** reales de `gastos_proveedores_libreta1.csv`, identificamos tanto los **10 proveedores/insumos que concentran el mayor flujo de efectivo** como **errores reales de captura humana** que serán depurados automáticamente en el pipeline hacia la zona `clean/`:
+### 3.3 Radiografía Preliminar del CSV Real y Errores Detectados para Limpieza en E1 y Avance 1
+Al perfilar los **1,568 registros** reales de `gastos_proveedores_libreta1.csv` (Libretas #1 y #2), identificamos tanto los **12 proveedores/insumos que concentran el mayor flujo de efectivo** como **errores reales de captura humana** que serán depurados automáticamente en el pipeline hacia la zona `clean/`:
 
-| Top 10 Insumos / Proveedores (Datos Reales) | Frecuencia (Días de pago) | Gasto Total Acumulado (MXN) | Gasto Promedio por Día Pagado (MXN) |
-| :--- | :---: | :---: | :---: |
-| **1. `bolillo`** | 115 | \$72,118.00 | \$627.11 |
-| **2. `tortillas_mirador`** | 121 | \$62,994.00 | \$520.61 |
-| **3. `pan`** | 140 *(incluye dobles entregas)* | \$41,458.00 | \$296.13 |
-| **4. `tortillas_sagrado_corazon`** | 109 | \$14,580.00 | \$133.76 |
-| **5. `verdura`** | 76 | \$19,179.00 | \$252.36 |
-| **6. `frijoles_santa_amalia`** | 120 | \$11,350.00 | \$94.58 |
-| **7. `frijoles_pato`** | 105 | \$9,820.00 | \$93.52 |
-| **8. `frijoles_claudia`** | 115 | \$7,484.00 | \$65.08 |
-| **9. `tapatia` / `pago_tapatia` / `jamon_tapatia`** | 15 | \$5,514.00 | \$367.60 |
-| **10. `masa`** | 115 | \$3,696.00 | \$32.14 |
+| Top 12 Insumos / Proveedores Homologados (Datos Reales) | Frecuencia (Entregas pagadas) | Gasto Total Acumulado (MXN) | Gasto Promedio por Entrega (MXN) | Mediana por Entrega (MXN) |
+| :--- | :---: | :---: | :---: | :---: |
+| **1. `bolillo`** | 100 | \$62,443.00 | \$624.43 | \$630.00 |
+| **2. `tortillas_mirador`** | 118 | \$61,096.00 | \$517.76 | \$518.00 |
+| **3. `pan` / `pan_hacienda`** | 151 *(incluye dobles entregas)* | \$43,110.00 | \$285.50 | \$297.00 |
+| **4. `verdura` / `don_alberto`** | 69 | \$17,465.00 | \$253.12 | \$231.00 |
+| **5. `tortillas_sagrado_corazon` / `sc`** | 111 | \$14,777.00 | \$133.13 | \$148.00 |
+| **6. `frijoles_santa_amalia`** | 118 | \$10,930.00 | \$92.63 | \$88.00 |
+| **7. `agua_real` / `agua_la_estancia`** | 45 | \$10,287.00 | \$228.60 | \$246.00 |
+| **8. `frijoles_pato`** | 99 | \$8,960.00 | \$90.51 | \$100.00 |
+| **9. `frijoles_claudia`** | 111 | \$7,117.00 | \$64.12 | \$60.00 |
+| **10. `tamales` / `tomales`** | 91 | \$5,936.00 | \$65.23 | \$70.00 |
+| **11. `tapatia` / `pago_tapatia` / `jamon_tapatia`** | 15 | \$5,619.00 | \$374.60 | \$350.00 |
+| **12. `marinela` *(galletas / pastelito)*** | 18 | \$4,528.00 | \$251.56 | \$233.50 |
 
-**Anomalías reales detectadas en el archivo crudo (`raw/`) listas para el preprocesamiento de E1:**
-1. **Error estructural de formato CSV:** Cada línea termina con una coma adicional (`tipo_gasto,monto_gasto,fecha,`), lo que genera una cuarta columna vacía (`Unnamed: 3` llena de `NaN`) al leer el archivo sin limpieza.
-2. **Inconsistencias semánticas y ortográficas (Sinónimos de captura manual):**
-   * Agua embotellada/garrafón escrita de 4 formas: `agua_ciel`, `agua_ciel_garrafones`, `garrafones_ciel`, `garrafones_agua`.
-   * Sopes del mismo proveedor escritos de 4 formas: `sopes`, `sopes_mirador`, `sopitos_mirador`, `sopes_resto`.
-   * Variantes singulares/plurales y abreviaturas: `nopal` vs. `nopales`, `platano` vs. `platanos`, `cuerito` vs. `cueritos`, `marinela_galleta` vs. `marinela_galletas`, `sobre_perro` vs. `caja_sobres_perro` vs. `dogchao_sobres`, `tortillas_sagrado_corazon` abreviado como `sc` (04/08/2026), y `pan` vs. `pan_hacienda`.
-3. **Registros múltiples en la misma fecha (`pan`, `frijoles_claudia`):** En varios días (ej. `12/06/2026`, `15/06/2026`, `30/09/2026`) aparece `pan` dos veces en el mismo día (entrega matutina principal de ~\$300–\$400 y recarga extra de \$50–\$140), lo que requiere agregación diaria antes de aplicar series de tiempo y FFT.
-4. **Picos atípicos de lunes (Efecto post-domingo):** Los lunes el gasto en `bolillo` sube hasta **\$840 – \$1,320 MXN** (frente al promedio de ~\$560 MXN entre semana), reflejando el reabastecimiento tras el cierre o menor abasto dominical.
+**Anomalías reales detectadas en el archivo crudo (`raw/`) listas para el preprocesamiento de E1 y Avance 1:**
+1. **Error estructural de formato CSV:** En la primera captura cada línea terminaba con una coma adicional (`tipo_gasto,monto_gasto,fecha,`), lo que genera una columna vacía (`columna_vacia_csv` llena de `NaN`) al leer el archivo sin limpieza.
+2. **Inconsistencias semánticas y ortográficas (36 sinónimos reales de captura manual en las 2 libretas, 90 ocurrencias):**
+   * Errores ortográficos reales: `tomales` (6 veces) en lugar de `tamales`; `nutrioly` en lugar de `nutrioli`.
+   * Proveedor escrito por nombre propio vs. producto: `don_alberto` y `verdura_don_alberto` $\rightarrow$ `verdura`; `los_cuates` $\rightarrow$ `leche_cuates`; `alegria` $\rightarrow$ `abono_agua_alegria`.
+   * Agua embotellada/garrafón escrita de 6 formas: `agua_ciel`, `agua_ciel_garrafones`, `garrafones_ciel`, `garrafones_agua`, `agua_garrafon`, `garrafones`; y `agua_real` vs. `agua_estancia` / `agua_la_estancia`.
+   * Sopes del mismo proveedor escritos de 4 formas: `sopes`, `sopes_mirador`, `sopitos`, `sopitos_mirador`, `sopes_resto`.
+   * Variantes singulares/plurales y abreviaturas: `nopal` vs. `nopales`, `platano` vs. `platanos`, `tomate` vs. `jitomate`, `cuerito` vs. `cueritos`, `marinela_galleta` vs. `marinela_galletas` vs. `marinela_pastelito`, `sobre_perro` vs. `caja_sobres_perro` vs. `dogchao_sobres`, `bolsitas`/`sobres` vs. `bolsas_celofan`, `tortillas_sagrado_corazon` abreviado como `sc` (04/08/2026), y `pan` vs. `pan_hacienda`.
+3. **Registros múltiples en la misma fecha (`pan`, `tamales`, `frijoles_claudia`):** En varios días aparece un mismo proveedor en ambas libretas o dos veces en el día (entrega matutina principal y recarga vespertina), lo que requiere agregación diaria antes de aplicar series de tiempo y FFT.
+4. **Picos atípicos de lunes (Efecto post-domingo):** Los lunes el gasto en `bolillo` sube hasta **\$840 – \$1,320 MXN** (frente al promedio de ~\$560 MXN entre semana), reflejando el reabastecimiento tras el domingo.
 
 ---
 
@@ -196,10 +200,11 @@ data-startup-abarrotesiq/
 │   └── E0-propuesta.md                        # Este documento de propuesta y validación (E0)
 ├── data/
 │   ├── raw/
-│   │   └── gastos_proveedores_libreta1.csv    # Dataset real completo digitalizado (1,151 registros)
+│   │   └── gastos_proveedores_libreta1.csv    # Dataset real completo digitalizado (1,568 registros, Libretas #1 y #2)
 │   └── sample/
 │       └── gastos_proveedores_sample.csv      # Muestra pública de 100 registros anonimizados
-├── notebooks/                                 # Exploración, limpieza (E1), regresión (E2) y ARIMA/LSTM (E3-E4)
+├── notebooks/
+│   └── Avance1_EDA_AbarrotesIQ.ipynb          # Avance 1 (Analítica de Datos): Definición, Dataset y EDA profundo
 ├── services/
 │   ├── ingesta/                               # Microservicio FastAPI + Dockerfile (E2-E3)
 │   ├── worker/                                # Módulo de limpieza automatizada / AWS Lambda (E2-E3)

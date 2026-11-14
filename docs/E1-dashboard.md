@@ -10,18 +10,18 @@
 
 ## 1. Limpieza y Preprocesamiento de Datos (`raw/` → `clean/`) — 20 pts
 
-El módulo automatizado [`services/worker/limpieza.py`](file:///c:/Users/angel/TecNM/Computo%20en%20la%20Nube/pointsale/services/worker/limpieza.py) toma el conjunto crudo de la **Libreta #1 de Abarrotes "Judith"** (`data/raw/gastos_abarrotes_raw.csv`, con $1,166$ registros brutos que incluyen errores reales de captura manual en mostrador y casos de prueba de los 5 tipos de anomalía de la Unidad 1) y genera el archivo depurado en `clean/gastos_abarrotes_clean.csv` ($1,151$ registros limpios).
+El módulo automatizado [`services/worker/limpieza.py`](file:///c:/Users/angel/TecNM/Computo%20en%20la%20Nube/pointsale/services/worker/limpieza.py) toma el conjunto crudo de las **Libretas #1 y #2 de Abarrotes "Judith"** (`data/raw/gastos_abarrotes_raw.csv`, con $1,583$ registros brutos que incluyen errores reales de captura manual en mostrador y casos de prueba de los 5 tipos de anomalía de la Unidad 1) y genera el archivo depurado en `clean/gastos_abarrotes_clean.csv` ($1,568$ registros limpios).
 
 ### 1.1 Reporte Cuantitativo de los 5 Tipos de Error Corregidos
 
 | # | Tipo de Error (Unidad 1) | Registros Corregidos | Método de Detección y Regla de Corrección Aplicada |
 | :---: | :--- | :---: | :--- |
 | **1** | **Duplicados** | **15** | Detección de tuplas idénticas (`drop_duplicates()`) generadas por doble captura de notas en el cierre de turno; se conserva la primera ocurrencia verificada. |
-| **2** | **Valores faltantes (`NaN`)** | **18** *(+1 columna vacía)* | Eliminación de la cuarta columna vacía generada por la coma final de cada línea en el CSV original (`tipo_gasto,monto_gasto,fecha,`). Imputación de `monto_gasto` nulo mediante la **mediana histórica del mismo producto/proveedor** (robusta ante asimetría) y recálculo de `unidades = round(monto_gasto / precio_unitario)`. |
-| **3** | **Tipos de dato y formato** | **81** | • Conversión de `fecha` a estándar ISO `YYYY-MM-DD` (`datetime64[ns]`) y reparación de la fecha mal capturada en agosto (`28/2026` $\rightarrow$ `28/08/2026`).<br>• Normalización a minúsculas sin espacios laterales (`strip().lower()`).<br>• **Homologación de 24 sinónimos reales escritos en la libreta:** `sc` $\rightarrow$ `tortillas_sagrado_corazon`, `agua_ciel_garrafones`/`garrafones_ciel`/`garrafones_agua` $\rightarrow$ `agua_ciel`, `pan_hacienda` $\rightarrow$ `pan`, `sopitos_mirador`/`sopes`/`sopes_resto` $\rightarrow$ `sopes_mirador`, `nopal` $\rightarrow$ `nopales`, `platano` $\rightarrow$ `platanos`, `cuerito` $\rightarrow$ `cueritos`, `marinela_galleta`/`marinela_galletas`/`marinela_pastelito` $\rightarrow$ `marinela`, `pago_tapatia`/`jamon_tapatia` $\rightarrow$ `tapatia`. |
+| **2** | **Valores faltantes (`NaN`)** | **18** *(+1 columna vacía)* | Eliminación de la columna vacía (`columna_vacia_csv`). Imputación de `monto_gasto` nulo mediante la **mediana histórica del mismo producto/proveedor** (robusta ante asimetría) y recálculo de `unidades = round(monto_gasto / precio_unitario)`. |
+| **3** | **Tipos de dato y formato** | **106** | • Conversión de `fecha` a estándar ISO `YYYY-MM-DD` (`datetime64[ns]`) y reparación de fechas mal capturadas (`28/2026` $\rightarrow$ `28/08/2026`).<br>• Normalización a minúsculas sin espacios laterales (`strip().lower()`).<br>• **Homologación de 36 sinónimos y errores ortográficos reales (90 registros en las 2 libretas):** `tomales` $\rightarrow$ `tamales`, `nutrioly` $\rightarrow$ `nutrioli`, `los_cuates` $\rightarrow$ `leche_cuates`, `don_alberto`/`verdura_don_alberto` $\rightarrow$ `verdura`, `sc` $\rightarrow$ `tortillas_sagrado_corazon`, `agua_ciel_garrafones`/`garrafones_ciel`/`garrafones_agua`/`agua_garrafon`/`garrafones` $\rightarrow$ `agua_ciel`, `agua_la_estancia`/`agua_estancia` $\rightarrow$ `agua_real`, `alegria` $\rightarrow$ `abono_agua_alegria`, `pan_hacienda` $\rightarrow$ `pan`, `sopitos`/`sopitos_mirador`/`sopes`/`sopes_resto` $\rightarrow$ `sopes_mirador`, `nopal` $\rightarrow$ `nopales`, `platano` $\rightarrow$ `platanos`, `tomate` $\rightarrow$ `jitomate`, `cuerito` $\rightarrow$ `cueritos`, `bolsitas`/`sobres` $\rightarrow$ `bolsas_celofan`. |
 | **4** | **Errores lógicos** | **14** | Detección de cantidades y montos negativos (`monto_gasto < 0` o `unidades < 0`, imposibles en pagos a proveedores) corregidos aplicando valor absoluto $|\cdot|$ y verificando consistencia aritmética $\text{monto\_gasto} = \text{unidades} \times \text{precio\_unitario}$. |
-| **5** | **Valores atípicos (*Outliers*)** | **19** | Detección combinada de errores de dedo extremos (`unidades == 999` / `monto >= $3,000`) y criterio intercuartílico por producto ($\text{monto} > Q_3 + 3.0 \times \text{IQR}$ para insumos con $n \ge 15$). Se winsorizan/imputan con la mediana específica del producto para no distorsionar la media ni la FFT. |
-| **Total** | **Registros Auditados: 1,166 $\rightarrow$ 1,151 limpios** | **147 correcciones** | Dataset limpio publicado en `s3://<bucket>/clean/gastos_abarrotes_clean.csv`. |
+| **5** | **Valores atípicos (*Outliers*)** | **11** | Detección combinada de errores de dedo extremos (`unidades == 999` / `monto >= $3,000`) y criterio intercuartílico por producto ($\text{monto} > Q_3 + 3.0 \times \text{IQR}$ para insumos con $n \ge 15$). Se winsorizan/imputan con la mediana específica del producto para no distorsionar la media ni la FFT. |
+| **Total** | **Registros Auditados: 1,583 $\rightarrow$ 1,568 limpios** | **164 correcciones** | Dataset limpio publicado en `s3://<bucket>/clean/gastos_abarrotes_clean.csv`. |
 
 ---
 
@@ -31,10 +31,10 @@ En la parte superior de [`services/tablero/app.py`](file:///c:/Users/angel/TecNM
 
 | KPI | Valor en el Tablero | Interpretación para el Dueño en 30 Segundos |
 | :--- | :---: | :--- |
-| **1. Reabastecimiento del Periodo** | **\$274,625.00 MXN** *(1,151 pagos)* | Efectivo total que salió de la caja de la Libreta #1 para pagar a repartidores en 121 días operativos (~**\$2,269.63 MXN por día**). |
-| **2. Pago Promedio por Proveedor (Ticket)** | **\$238.60 MXN** *(Mediana: \$162 MXN)* | Cada vez que un repartidor entra a cobrar a la tienda, recibe en promedio \$238.60 MXN en efectivo. |
-| **3. Insumo Estrella (Mayor Flujo)** | **Bolillo (\$70,898 MXN · 25.8%)** | Una cuarta parte de todo el dinero que paga la tienda a proveedores se va únicamente en el bolillo diario. |
-| **4. Variación vs. Semana Anterior** | **-8.4% (-\$1,092 MXN)** | Compara automáticamente los últimos 6 días hábiles contra los 6 días hábiles previos para alertar si el gasto semanal está subiendo o bajando. |
+| **1. Reabastecimiento del Periodo** | **\$328,960.25 MXN** *(1,568 pagos)* | Efectivo total que salió de la caja en las Libretas #1 y #2 para pagar a repartidores en 122 días operativos (~**\$2,696.39 MXN por día**). |
+| **2. Pago Promedio por Proveedor (Ticket)** | **\$209.80 MXN** *(Mediana: \$135 MXN)* | Cada vez que un repartidor entra a cobrar a la tienda, recibe en promedio \$209.80 MXN en efectivo ($Q_1 = \$70$, $Q_3 = \$300$). |
+| **3. Insumo Estrella (Mayor Flujo)** | **Bolillo (\$62,443 MXN · 19.0%)** | Casi una quinta parte de todo el dinero que paga la tienda a proveedores se va únicamente en el bolillo diario, seguido de Tortillas Mirador (\$61,096 · 18.6%). |
+| **4. Variación vs. Semana Anterior** | **Calculado dinámicamente** | Compara automáticamente los últimos 6 días hábiles contra los 6 días hábiles previos para alertar si el gasto semanal está subiendo o bajando. |
 
 ---
 
@@ -43,15 +43,15 @@ En la parte superior de [`services/tablero/app.py`](file:///c:/Users/angel/TecNM
 Cada gráfica del tablero fue seleccionada según la naturaleza de la pregunta analítica (tendencia, distribución, relación, comparación y frecuencia) y lleva escrito su **hallazgo principal en el título**:
 
 ### Gráfica 1 — Líneas (Tendencia y Efecto Quincena)
-* **Título con hallazgo:** *"Los días de quincena e inicios de semana exigen 14.8% más efectivo en caja que un día normal"*
+* **Título con hallazgo:** *"Los días de quincena e inicios de semana exigen más efectivo en caja que un día normal"*
 * **Justificación teórica:** La gráfica de líneas con media móvil de 7 días permite separar el ruido diario de la tendencia subyacente y visualizar los picos recurrentes en los días `1, 15, 16 y 30` de cada mes.
 
 ### Gráfica 2 — Histograma con Regla de Sturges (Distribución del Ticket)
-* **Título con hallazgo:** *"El 74% de los pagos a repartidores son $\le$ \$350 MXN, con sesgo positivo (0.89) por Bolillo y Tortilla"*
+* **Título con hallazgo:** *"El 75% de los pagos a repartidores son $\le$ \$300 MXN, con sesgo positivo (1.32) por Bolillo y Tortilla"*
 * **Cálculo del número óptimo de *bins* (Regla de Sturges):**
-  Para $n = 1,151$ registros limpios:
-  $$k = \lceil 1 + 3.322 \log_{10}(1151) \rceil = \lceil 1 + 3.322 \times 3.06108 \rceil = \lceil 11.169 \rceil = 12 \text{ bins}$$
-* **Análisis de forma y sesgo:** La distribución es **asimétrica positiva (sesgada a la derecha)** porque la media ($\$238.60\text{ MXN}$) es mayor que la mediana ($\$162.00\text{ MXN}$). La mayoría de los pagos diarios son pequeños (masa \$14–\$42, frijol \$40–\$120, periódico \$53), mientras que la cola derecha corresponde a los pagos diarios fuertes de `bolillo` (\$500–\$966) y `tortillas_mirador` (\$504–\$616).
+  Para $n = 1,568$ registros limpios:
+  $$k = \lceil 1 + 3.322 \log_{10}(1568) \rceil = \lceil 1 + 3.322 \times 3.1953 \rceil = \lceil 11.615 \rceil = 12 \text{ bins}$$
+* **Análisis de forma y sesgo:** La distribución es **asimétrica positiva (sesgada a la derecha, $\text{Skewness} = 1.32$, $\text{Kurtosis} = 1.19$)** porque la media ($\$209.80\text{ MXN}$) es mayor que la mediana ($\$135.00\text{ MXN}$) y que la moda ($\$42.00\text{ MXN}$). La mayoría de los pagos diarios son pequeños (masa \$14–\$42, tamales \$14–\$84, frijol \$40–\$120), mientras que la cola derecha corresponde a los pagos diarios fuertes de `bolillo` (\$500–\$1,036) y `tortillas_mirador` (\$504–\$616).
 
 ### Gráfica 3 — Mapa de Calor (Tabla Cruzada Día $\times$ Insumo y Matriz de Correlación de Pearson)
 * **Título con hallazgo:** *"Los lunes el Bolillo sube a \$729 MXN prom. (+22%), mientras Tortillas Mirador es constante toda la semana"*
@@ -150,13 +150,13 @@ $$T_k = \frac{1}{f_k} = \frac{N}{k} \;\left[\text{días por ciclo}\right]$$
 
 ```powershell
 # 1. Instalar dependencias de Python
-pip install -r services/tablero/requirements.txt
+py -3.11 -m pip install -r services/tablero/requirements.txt
 
 # 2. Ejecutar limpieza (raw -> clean) y subir automáticamente a Amazon S3
-python services/worker/s3_datalake.py
+py -3.11 services/worker/s3_datalake.py
 
 # 3. Levantar el Dashboard Empresarial en Streamlit (conectado a S3 clean/)
-streamlit run services/tablero/app.py
+py -3.11 -m streamlit run services/tablero/app.py
 ```
 
 ---

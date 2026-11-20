@@ -41,7 +41,7 @@ export interface CartItem {
   bulkAmountInPesos?: number;
 }
 
-export type PaymentMethod = 'efectivo' | 'tarjeta' | 'transferencia' | 'fiado';
+export type PaymentMethod = 'efectivo' | 'tarjeta' | 'fiado';
 
 export interface Sale {
   id: string;

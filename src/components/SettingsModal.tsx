@@ -101,19 +101,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onOpenGoo
       try {
         const parsed = JSON.parse(event.target?.result as string);
         if (parsed.products && Array.isArray(parsed.products)) {
-          localStorage.setItem('pos_abarrotes_products_v1', JSON.stringify(parsed.products));
+          localStorage.setItem('pos_abarrotes_products_v3', JSON.stringify(parsed.products));
         }
         if (parsed.sales && Array.isArray(parsed.sales)) {
-          localStorage.setItem('pos_abarrotes_sales_v1', JSON.stringify(parsed.sales));
+          localStorage.setItem('pos_abarrotes_sales_v3', JSON.stringify(parsed.sales));
         }
         if (parsed.customers && Array.isArray(parsed.customers)) {
-          localStorage.setItem('pos_abarrotes_customers_v1', JSON.stringify(parsed.customers));
+          localStorage.setItem('pos_abarrotes_customers_v3', JSON.stringify(parsed.customers));
         }
         if (parsed.shift) {
-          localStorage.setItem('pos_abarrotes_shift_v1', JSON.stringify(parsed.shift));
+          localStorage.setItem('pos_abarrotes_shift_v3', JSON.stringify(parsed.shift));
         }
         if (parsed.settings) {
-          localStorage.setItem('pos_abarrotes_settings_v1', JSON.stringify(parsed.settings));
+          localStorage.setItem('pos_abarrotes_settings_v3', JSON.stringify(parsed.settings));
         }
         setImportStatus('¡Respaldo importado correctamente! Recargando datos...');
         setTimeout(() => {

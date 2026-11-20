@@ -1,0 +1,299 @@
+{
+  "version": "v1.0.0-e3",
+  "entrenado_en_utc": "2026-11-20T03:48:12.930022+00:00",
+  "dataset_registros": 1568,
+  "pronostico_campeon": {
+    "modelo": "SARIMA(1,0,1)(1,0,0)[7] + Quincena",
+    "AIC": 2067.33,
+    "BIC": 2090.46,
+    "RMSE": 540.69,
+    "MAE": 390.61,
+    "MAPE_pct": 36.97
+  },
+  "comparativa_arima_aic": [
+    {
+      "modelo": "ARIMA(1,0,0)",
+      "orden": "(1,0,0)",
+      "AIC": 2241.28,
+      "BIC": 2250.11,
+      "RMSE": 709.25,
+      "MAE": 501.25,
+      "MAPE_pct": 38.87
+    },
+    {
+      "modelo": "ARIMA(1,0,1)",
+      "orden": "(1,0,1)",
+      "AIC": 2224.53,
+      "BIC": 2236.27,
+      "RMSE": 702.18,
+      "MAE": 491.15,
+      "MAPE_pct": 39.68
+    },
+    {
+      "modelo": "ARIMA(2,0,1)",
+      "orden": "(2,0,1)",
+      "AIC": 2205.74,
+      "BIC": 2220.37,
+      "RMSE": 689.96,
+      "MAE": 483.83,
+      "MAPE_pct": 39.15
+    },
+    {
+      "modelo": "ARIMA(1,1,1)",
+      "orden": "(1,1,1)",
+      "AIC": 2230.09,
+      "BIC": 2241.8,
+      "RMSE": 759.08,
+      "MAE": 549.37,
+      "MAPE_pct": 126.18
+    },
+    {
+      "modelo": "SARIMA(1,0,1)(1,0,0)[7] + Quincena",
+      "orden": "(1,0,1)x(1,0,0)_7",
+      "AIC": 2067.33,
+      "BIC": 2090.46,
+      "RMSE": 540.69,
+      "MAE": 390.61,
+      "MAPE_pct": 36.97
+    },
+    {
+      "modelo": "SARIMA(2,0,1)(1,0,0)[7] + Quincena",
+      "orden": "(2,0,1)x(1,0,0)_7",
+      "AIC": 2069.17,
+      "BIC": 2095.19,
+      "RMSE": 540.36,
+      "MAE": 391.25,
+      "MAPE_pct": 36.88
+    }
+  ],
+  "justificacion_arima": {
+    "d": "d = 0 porque la prueba Dickey-Fuller Aumentada rechaza raíz unitaria (ADF = -6.1417, p = 0.0005 < 0.05).",
+    "p": "p = 1 porque la PACF presenta corte significativo después de los primeros rezagos (PACF_1 = +0.4066).",
+    "q": "q = 1 para absorber choques transitorios de entregas acumuladas en un día.",
+    "estacionalidad_s7": "Se incluye componente semanal (s = 7 días) y regresor de quincena por los picos de la FFT en T = 7.0 y T = 15.5 días."
+  },
+  "clasificador_campeon": "Árbol de Decisión (CART, max_depth=4)",
+  "comparativa_4_clasificadores": {
+    "Naive Bayes (GaussianNB)": {
+      "matriz_confusion": {
+        "TN": 292,
+        "FP": 16,
+        "FN": 46,
+        "TP": 38,
+        "matriz_2x2": [
+          [
+            292,
+            16
+          ],
+          [
+            46,
+            38
+          ]
+        ]
+      },
+      "accuracy": 0.8418,
+      "precision": 0.7037,
+      "recall": 0.4524,
+      "f1_score": 0.5507,
+      "roc_auc": 0.9505
+    },
+    "SVM (RBF Kernel, C=1.5)": {
+      "matriz_confusion": {
+        "TN": 304,
+        "FP": 4,
+        "FN": 18,
+        "TP": 66,
+        "matriz_2x2": [
+          [
+            304,
+            4
+          ],
+          [
+            18,
+            66
+          ]
+        ]
+      },
+      "accuracy": 0.9439,
+      "precision": 0.9429,
+      "recall": 0.7857,
+      "f1_score": 0.8571,
+      "roc_auc": 0.9921
+    },
+    "KNN (k=7 Vecinos)": {
+      "matriz_confusion": {
+        "TN": 301,
+        "FP": 7,
+        "FN": 14,
+        "TP": 70,
+        "matriz_2x2": [
+          [
+            301,
+            7
+          ],
+          [
+            14,
+            70
+          ]
+        ]
+      },
+      "accuracy": 0.9464,
+      "precision": 0.9091,
+      "recall": 0.8333,
+      "f1_score": 0.8696,
+      "roc_auc": 0.9735
+    },
+    "Árbol de Decisión (CART, max_depth=4)": {
+      "matriz_confusion": {
+        "TN": 302,
+        "FP": 6,
+        "FN": 1,
+        "TP": 83,
+        "matriz_2x2": [
+          [
+            302,
+            6
+          ],
+          [
+            1,
+            83
+          ]
+        ]
+      },
+      "accuracy": 0.9821,
+      "precision": 0.9326,
+      "recall": 0.9881,
+      "f1_score": 0.9595,
+      "roc_auc": 0.9883
+    }
+  },
+  "justificacion_recall": "En Abarrotes 'Judith' el RECALL (sensibilidad) de la clase 1 (alerta_gasto_alto) es más crítico que la precisión: un Falso Negativo (FN) significa no avisarle a la dueña que habrá un cobro fuerte (> $300 MXN) y dejar la caja sin efectivo frente al repartidor; en cambio, un Falso Positivo (FP) solo implica apartar efectivo extra en el sobre de proveedores que permanece seguro en la tienda.",
+  "pronostico_14_dias_muestra": [
+    {
+      "paso_h": 1,
+      "fecha": "2026-10-24",
+      "dia_semana": "Sábado",
+      "es_quincena": false,
+      "pronostico_mxn": 2311.7,
+      "ic_95_inferior": 1548.68,
+      "ic_95_superior": 3074.72
+    },
+    {
+      "paso_h": 2,
+      "fecha": "2026-10-25",
+      "dia_semana": "Domingo",
+      "es_quincena": false,
+      "pronostico_mxn": 2586.41,
+      "ic_95_inferior": 1819.8,
+      "ic_95_superior": 3353.03
+    },
+    {
+      "paso_h": 3,
+      "fecha": "2026-10-26",
+      "dia_semana": "Lunes",
+      "es_quincena": false,
+      "pronostico_mxn": 2973.15,
+      "ic_95_inferior": 2206.5,
+      "ic_95_superior": 3739.8
+    },
+    {
+      "paso_h": 4,
+      "fecha": "2026-10-27",
+      "dia_semana": "Martes",
+      "es_quincena": false,
+      "pronostico_mxn": 2453.87,
+      "ic_95_inferior": 1687.22,
+      "ic_95_superior": 3220.52
+    },
+    {
+      "paso_h": 5,
+      "fecha": "2026-10-28",
+      "dia_semana": "Miércoles",
+      "es_quincena": false,
+      "pronostico_mxn": 2435.49,
+      "ic_95_inferior": 1668.84,
+      "ic_95_superior": 3202.14
+    },
+    {
+      "paso_h": 6,
+      "fecha": "2026-10-29",
+      "dia_semana": "Jueves",
+      "es_quincena": true,
+      "pronostico_mxn": 2487.16,
+      "ic_95_inferior": 1720.51,
+      "ic_95_superior": 3253.81
+    },
+    {
+      "paso_h": 7,
+      "fecha": "2026-10-30",
+      "dia_semana": "Viernes",
+      "es_quincena": true,
+      "pronostico_mxn": 2383.28,
+      "ic_95_inferior": 1616.63,
+      "ic_95_superior": 3149.93
+    },
+    {
+      "paso_h": 8,
+      "fecha": "2026-10-31",
+      "dia_semana": "Sábado",
+      "es_quincena": true,
+      "pronostico_mxn": 2445.51,
+      "ic_95_inferior": 1678.86,
+      "ic_95_superior": 3212.16
+    },
+    {
+      "paso_h": 9,
+      "fecha": "2026-11-01",
+      "dia_semana": "Domingo",
+      "es_quincena": true,
+      "pronostico_mxn": 2596.11,
+      "ic_95_inferior": 1829.46,
+      "ic_95_superior": 3362.76
+    },
+    {
+      "paso_h": 10,
+      "fecha": "2026-11-02",
+      "dia_semana": "Lunes",
+      "es_quincena": true,
+      "pronostico_mxn": 3018.58,
+      "ic_95_inferior": 2251.93,
+      "ic_95_superior": 3785.23
+    },
+    {
+      "paso_h": 11,
+      "fecha": "2026-11-03",
+      "dia_semana": "Martes",
+      "es_quincena": false,
+      "pronostico_mxn": 2535.55,
+      "ic_95_inferior": 1768.9,
+      "ic_95_superior": 3302.2
+    },
+    {
+      "paso_h": 12,
+      "fecha": "2026-11-04",
+      "dia_semana": "Miércoles",
+      "es_quincena": false,
+      "pronostico_mxn": 2486.39,
+      "ic_95_inferior": 1719.74,
+      "ic_95_superior": 3253.04
+    },
+    {
+      "paso_h": 13,
+      "fecha": "2026-11-05",
+      "dia_semana": "Jueves",
+      "es_quincena": false,
+      "pronostico_mxn": 2487.8,
+      "ic_95_inferior": 1721.15,
+      "ic_95_superior": 3254.45
+    },
+    {
+      "paso_h": 14,
+      "fecha": "2026-11-06",
+      "dia_semana": "Viernes",
+      "es_quincena": false,
+      "pronostico_mxn": 2475.49,
+      "ic_95_inferior": 1708.84,
+      "ic_95_superior": 3242.14
+    }
+  ]
+}

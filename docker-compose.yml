@@ -1,4 +1,5 @@
-# Orquestación de microservicios y base de datos AbarrotesIQ (Entregables E2 y E3)
+# Orquestación completa de microservicios AbarrotesIQ (Entregables E2 y E3)
+# Levanta todo en local con un solo comando: docker compose up --build
 services:
   postgres_db:
     image: postgres:16-alpine
@@ -20,8 +21,6 @@ services:
       dockerfile: services/ingesta/Dockerfile
     container_name: abarrotesiq-ingesta
     restart: unless-stopped
-    env_file:
-      - .env
     ports:
       - "8000:8000"
     volumes:
@@ -33,13 +32,23 @@ services:
       dockerfile: services/worker/Dockerfile
     container_name: abarrotesiq-worker
     restart: unless-stopped
-    env_file:
-      - .env
     depends_on:
       - postgres_db
       - ingesta
     volumes:
       - ./data:/app/data
+
+  modelos:
+    build:
+      context: .
+      dockerfile: services/modelos/Dockerfile
+    container_name: abarrotesiq-modelos
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
 
   tablero:
     build:
@@ -47,14 +56,17 @@ services:
       dockerfile: services/tablero/Dockerfile
     container_name: abarrotesiq-tablero
     restart: unless-stopped
-    env_file:
-      - .env
+    environment:
+      MODELOS_API_URL: http://modelos:8001
+      INGESTA_API_URL: http://ingesta:8000
     ports:
       - "8501:8501"
     depends_on:
       - postgres_db
+      - modelos
     volumes:
       - ./data:/app/data
+      - ./models:/app/models
 
 volumes:
   pgdata_abarrotesiq:

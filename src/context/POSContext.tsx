@@ -136,14 +136,42 @@ interface POSContextType {
 const POSContext = createContext<POSContextType | undefined>(undefined);
 
 const STORAGE_KEYS = {
-  PRODUCTS: 'pos_abarrotes_products_v1',
-  SALES: 'pos_abarrotes_sales_v1',
-  CUSTOMERS: 'pos_abarrotes_customers_v1',
-  SHIFT: 'pos_abarrotes_shift_v1',
-  SETTINGS: 'pos_abarrotes_settings_v1',
-  USERS: 'pos_abarrotes_users_v1',
-  SESSION: 'pos_abarrotes_session_v1'
+  PRODUCTS: 'pos_abarrotes_products_v3',
+  SALES: 'pos_abarrotes_sales_v3',
+  CUSTOMERS: 'pos_abarrotes_customers_v3',
+  SHIFT: 'pos_abarrotes_shift_v3',
+  SETTINGS: 'pos_abarrotes_settings_v3',
+  USERS: 'pos_abarrotes_users_v3',
+  SESSION: 'pos_abarrotes_session_v3'
 };
+
+// Purge legacy v1/v2 default mock data keys from localStorage and IndexedDB
+try {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    [
+      'pos_abarrotes_products_v1',
+      'pos_abarrotes_sales_v1',
+      'pos_abarrotes_customers_v1',
+      'pos_abarrotes_shift_v1',
+      'pos_abarrotes_settings_v1',
+      'pos_abarrotes_users_v1',
+      'pos_abarrotes_session_v1',
+      'pos_offline_sales_queue_v1',
+      'pos_abarrotes_products_v2',
+      'pos_abarrotes_sales_v2',
+      'pos_abarrotes_customers_v2',
+      'pos_abarrotes_shift_v2',
+      'pos_abarrotes_settings_v2',
+      'pos_abarrotes_users_v2',
+      'pos_abarrotes_session_v2'
+    ].forEach((k) => window.localStorage.removeItem(k));
+  }
+  if (typeof window !== 'undefined' && window.indexedDB) {
+    window.indexedDB.deleteDatabase('AbarrotesPOS_DB');
+  }
+} catch {
+  // Ignore storage cleanup errors
+}
 
 export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeTab, setActiveTab] = useState<POSTab>('pos');
@@ -164,12 +192,17 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.SALES);
       if (saved) {
-        const parsed: Sale[] = JSON.parse(saved);
-        // If there were only the original 2 test sales, upgrade to INITIAL_SALES with 7 days history
-        if (parsed.length <= 2) {
-          return INITIAL_SALES;
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.mode === 'delta' && Array.isArray(parsed.added)) {
+          const canceledSet = new Set<string>(parsed.canceledIds || []);
+          const base = parsed.wasReset
+            ? []
+            : INITIAL_SALES.filter((s) => !canceledSet.has(s.id));
+          return [...parsed.added, ...base];
         }
-        return parsed;
+        if (Array.isArray(parsed) && parsed.length > 10) {
+          return parsed;
+        }
       }
       return INITIAL_SALES;
     } catch {
@@ -351,25 +384,48 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSettings((s) => ({ ...s, headerBgColor: color }));
   };
 
-  // Sync to local storage
+  // Sync to local storage (using compact delta for sales to avoid 5MB localStorage quota error on 7,815 tickets)
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+    try {
+      localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+    } catch {}
   }, [products]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.SALES, JSON.stringify(sales));
+    try {
+      const initialIds = new Set(INITIAL_SALES.map((s) => s.id));
+      const currentIds = new Set(sales.map((s) => s.id));
+      const added = sales.filter((s) => !initialIds.has(s.id));
+      const canceledIds = INITIAL_SALES.filter((s) => !currentIds.has(s.id)).map((s) => s.id);
+      const wasReset = sales.length === 0 || canceledIds.length === INITIAL_SALES.length;
+      localStorage.setItem(
+        STORAGE_KEYS.SALES,
+        JSON.stringify({
+          mode: 'delta',
+          wasReset,
+          added,
+          canceledIds: wasReset ? [] : canceledIds
+        })
+      );
+    } catch {}
   }, [sales]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(customers));
+    try {
+      localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(customers));
+    } catch {}
   }, [customers]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.SHIFT, JSON.stringify(cashShift));
+    try {
+      localStorage.setItem(STORAGE_KEYS.SHIFT, JSON.stringify(cashShift));
+    } catch {}
   }, [cashShift]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    try {
+      localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    } catch {}
   }, [settings]);
 
   // Online / Offline & Local Persistence Queue State

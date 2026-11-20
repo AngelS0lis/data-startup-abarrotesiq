@@ -9,6 +9,8 @@
     <meta property="og:description" content="Sistema de punto de venta (POS) para tiendas de abarrotes con cobro rápido, inventario, código de barras, venta a granel, corte de caja, libreta de fiados, persistencia offline con IndexedDB, reintento de sincronización con Google Sheets y dashboard analítico." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#059669" />
+    <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -16,6 +18,13 @@
   <body class="bg-slate-100 text-slate-800 antialiased font-sans selection:bg-emerald-500 selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').catch(() => {});
+        });
+      }
+    </script>
   </body>
 </html>
 

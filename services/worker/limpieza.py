@@ -203,6 +203,11 @@ def generar_raw_enriquecido(
     reales de captura y sembrar ejemplos controlados de los 5 tipos de error requeridos
     por la rúbrica de la Unidad 1 / E1.
     """
+    if not path_libreta_original.exists():
+        fallback_sample = path_libreta_original.parents[1] / "sample" / "gastos_proveedores_sample.csv"
+        if fallback_sample.exists():
+            path_libreta_original = fallback_sample
+
     lineas_crudas = []
     with open(path_libreta_original, "r", encoding="utf-8") as f:
         for i, line in enumerate(f):
@@ -251,6 +256,8 @@ def generar_raw_enriquecido(
     rng = np.random.default_rng(42)
     conteo_base = df.groupby("tipo_gasto")["tipo_gasto"].transform("count")
     indices_frecuentes = np.where(conteo_base >= 10)[0]
+    if len(indices_frecuentes) < 45:
+        indices_frecuentes = np.arange(len(df))
 
     # 1) Valores faltantes (NaN en unidades y monto_gasto) -> 18 registros
     idx_nan_uni = rng.choice(indices_frecuentes, size=12, replace=False)
@@ -282,7 +289,7 @@ def generar_raw_enriquecido(
     # 4) Errores de formato / tipo de dato (mayúsculas/espacios y la fecha mal escrita '28/2026' original)
     idx_fmt = rng.choice(candidatos_out, size=15, replace=False)
     df.loc[idx_fmt, "tipo_gasto"] = "  " + df.loc[idx_fmt, "tipo_gasto"].str.upper() + " "
-    df.loc[df.index[777], "fecha"] = "28/2026"
+    df.loc[df.index[min(777, len(df) - 1)], "fecha"] = "28/2026"
 
     # 5) Duplicados exactos (15 filas duplicadas al final)
     muestra_dup = df.sample(n=15, random_state=42)

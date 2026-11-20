@@ -46,10 +46,6 @@ export const CashShiftView: React.FC = () => {
     .filter((s) => s.paymentMethod === 'tarjeta')
     .reduce((sum, s) => sum + s.total, 0);
 
-  const transferSalesTotal = shiftSales
-    .filter((s) => s.paymentMethod === 'transferencia')
-    .reduce((sum, s) => sum + s.total, 0);
-
   const fiadoSalesTotal = shiftSales
     .filter((s) => s.paymentMethod === 'fiado')
     .reduce((sum, s) => sum + s.total, 0);
@@ -282,17 +278,11 @@ export const CashShiftView: React.FC = () => {
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">
               Otros Métodos de Cobro (No Efectivo)
             </span>
-            <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="p-2.5 bg-blue-50/70 border border-blue-200 rounded-xl">
                 <span className="text-blue-800 block font-semibold">Tarjeta</span>
                 <span className="text-base font-black font-mono text-blue-900">
                   ${cardSalesTotal.toFixed(2)}
-                </span>
-              </div>
-              <div className="p-2.5 bg-purple-50/70 border border-purple-200 rounded-xl">
-                <span className="text-purple-800 block font-semibold">Transferencia</span>
-                <span className="text-base font-black font-mono text-purple-900">
-                  ${transferSalesTotal.toFixed(2)}
                 </span>
               </div>
               <div className="p-2.5 bg-amber-50/70 border border-amber-200 rounded-xl">

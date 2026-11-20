@@ -1,0 +1,134 @@
+# Manifiesto de Kubernetes: Deployments para Ingesta, Modelos y Tablero (Entregable E3)
+# Compatible con minikube, kind y Amazon EKS (aplicar con: kubectl apply -f k8s/)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: abarrotesiq-ingesta
+  labels:
+    app: abarrotesiq
+    tier: ingesta
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: abarrotesiq
+      tier: ingesta
+  template:
+    metadata:
+      labels:
+        app: abarrotesiq
+        tier: ingesta
+    spec:
+      containers:
+        - name: ingesta-api
+          image: abarrotesiq/ingesta:v3.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: AWS_DEFAULT_REGION
+              value: "us-east-1"
+            - name: AWS_S3_BUCKET
+              value: "abarrotesiq-datalake-judith"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: abarrotesiq-modelos
+  labels:
+    app: abarrotesiq
+    tier: modelos
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: abarrotesiq
+      tier: modelos
+  template:
+    metadata:
+      labels:
+        app: abarrotesiq
+        tier: modelos
+    spec:
+      containers:
+        - name: modelos-api
+          image: abarrotesiq/modelos:v3.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8001
+          resources:
+            requests:
+              cpu: "150m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: abarrotesiq-tablero
+  labels:
+    app: abarrotesiq
+    tier: tablero
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: abarrotesiq
+      tier: tablero
+  template:
+    metadata:
+      labels:
+        app: abarrotesiq
+        tier: tablero
+    spec:
+      containers:
+        - name: tablero-streamlit
+          image: abarrotesiq/tablero:v3.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8501
+          env:
+            - name: MODELOS_API_URL
+              value: "http://abarrotesiq-modelos-svc:8001"
+            - name: INGESTA_API_URL
+              value: "http://abarrotesiq-ingesta-svc:8000"
+          resources:
+            requests:
+              cpu: "150m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

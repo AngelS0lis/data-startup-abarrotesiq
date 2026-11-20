@@ -15,9 +15,9 @@ firebase-applet-config.json
 *.tfstate
 *.tfstate.*
 
-# Datos completos en local (en Git solo vive data/sample/)
-data/raw/
-data/clean/
+# Colas locales efímeras y base de datos SQLite temporal
+data/raw/*.jsonl
+data/clean/*.db
 __pycache__/
 .venv/
 venv/

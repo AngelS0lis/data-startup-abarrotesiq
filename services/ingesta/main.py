@@ -157,7 +157,7 @@ async def ingestar_archivo_csv(archivo: UploadFile = File(...)):
         df_subido = pd.read_csv(io.BytesIO(contenido))
     except Exception as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=422,
             detail=f"No fue posible parsear el archivo CSV: {exc}",
         )
 
@@ -165,7 +165,7 @@ async def ingestar_archivo_csv(archivo: UploadFile = File(...)):
     cols_archivo = {c.strip().lower() for c in df_subido.columns}
     if not cols_requeridas.issubset(cols_archivo):
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=422,
             detail=f"El CSV debe incluir las columnas {sorted(cols_requeridas)}. Recibidas: {list(df_subido.columns)}",
         )
 

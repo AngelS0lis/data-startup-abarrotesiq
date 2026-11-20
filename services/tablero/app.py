@@ -39,7 +39,7 @@ sys.path.append(str(RAIZ_PROYECTO / "services" / "modelos"))
 load_dotenv(RAIZ_PROYECTO / ".env")
 
 st.set_page_config(
-    page_title="AbarrotesIQ · Tablero Empresarial v2 (E1 + E2)",
+    page_title="AbarrotesIQ · Tablero Empresarial v3 (E1 + E2 + E3)",
     page_icon="🛒",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -785,4 +785,184 @@ if len(df) >= 15:
             fig_pacf.add_trace(go.Scatter(x=df_acf_pacf["rezago_k"], y=df_acf_pacf["limite_ic_inf"], mode="lines", line=dict(color="#ef4444", dash="dash"), name="IC 95% (-1.96/√N)"))
             fig_pacf.update_layout(title="Función de Autocorrelación Parcial (PACF) hasta k = 21 días", xaxis_title="Rezago k (días)", yaxis_title="PACF φ_kk", height=360)
             st.plotly_chart(fig_pacf, use_container_width=True)
+
+st.markdown("---")
+
+# --- 7. TABLERO V3 (ENTREGABLE E3: PRONÓSTICO ARIMA/SARIMA CON BANDA 95% Y 4 CLASIFICADORES) ---
+st.header("🤖 Tablero v3 (Entregable E3) · Pronóstico SARIMA (7–30 Días) y Clasificador de Liquidez")
+st.markdown(
+    "Consume los endpoints `/pronostico` y `/clasificar` del **Servicio de Modelos** para proyectar "
+    "el flujo de efectivo de **7 a 30 días con banda de confianza al 95%** y comparar los **4 clasificadores** "
+    "(*Naive Bayes, SVM, KNN y Árbol de Decisión*)."
+)
+
+from entrenar_modelos import (
+    construir_y_guardar_modelos,
+    pronosticar_horizonte_sarima,
+    clasificar_transaccion_en_vivo,
+)
+
+@st.cache_resource
+def cargar_artefactos_e3():
+    return construir_y_guardar_modelos()
+
+datos_e3 = cargar_artefactos_e3()
+art_arima = datos_e3["artefacto_arima"]
+art_clf = datos_e3["artefacto_clf"]
+
+tab_e3_pron, tab_e3_clf, tab_e3_sim = st.tabs([
+    "🔮 1. Pronóstico SARIMA (7 a 30 Días con Banda de Confianza 95% y Selección AIC)",
+    "🏆 2. Comparativa de 4 Clasificadores (Naive Bayes, SVM, KNN y Árbol) + Matrices de Confusión",
+    "⚡ 3. Simulador en Vivo de Endpoint `/clasificar` (Alerta de Liquidez en Caja)",
+])
+
+with tab_e3_pron:
+    horizonte_sel = st.slider(
+        "Selecciona el horizonte de pronóstico (días hacia adelante):",
+        min_value=7,
+        max_value=30,
+        value=14,
+        step=1,
+    )
+    lista_pron = pronosticar_horizonte_sarima(art_arima, horizonte_dias=horizonte_sel)
+    df_pron = pd.DataFrame(lista_pron)
+    df_pron["fecha_dt"] = pd.to_datetime(df_pron["fecha"])
+
+    mod_sel = art_arima["modelo_seleccionado"]
+    cp1, cp2, cp3, cp4, cp5 = st.columns(5)
+    cp1.metric("Modelo Campeón", mod_sel["nombre_modelo"].split("+")[0].strip())
+    cp2.metric("Criterio AIC", f"{mod_sel['AIC']:,.2f}")
+    cp3.metric("Criterio BIC", f"{mod_sel['BIC']:,.2f}")
+    cp4.metric("RMSE Entrenamiento", f"${mod_sel['RMSE']:,.2f} MXN")
+    cp5.metric("Efectivo Requerido ({}d)".format(horizonte_sel), f"${df_pron['pronostico_mxn'].sum():,.0f} MXN")
+
+    # Gráfica histórica reciente (últimos 35 días) + Pronóstico con Banda de Confianza al 95%
+    df_hist_rec = df_completo.groupby("fecha_dt", as_index=False)["monto_gasto"].sum().sort_values("fecha_dt").tail(35)
+
+    fig_sarima = go.Figure()
+    fig_sarima.add_trace(
+        go.Scatter(
+            x=df_hist_rec["fecha_dt"],
+            y=df_hist_rec["monto_gasto"],
+            mode="lines+markers",
+            name="Gasto Diario Histórico Real",
+            line=dict(color="#1e293b", width=2),
+            marker=dict(size=5),
+        )
+    )
+    # Banda de confianza al 95%
+    fig_sarima.add_trace(
+        go.Scatter(
+            x=pd.concat([df_pron["fecha_dt"], df_pron["fecha_dt"][::-1]]),
+            y=pd.concat([df_pron["ic_95_superior"], df_pron["ic_95_inferior"][::-1]]),
+            fill="toself",
+            fillcolor="rgba(37, 99, 235, 0.18)",
+            line=dict(color="rgba(255,255,255,0)"),
+            hoverinfo="skip",
+            showlegend=True,
+            name="Intervalo de Confianza al 95%",
+        )
+    )
+    fig_sarima.add_trace(
+        go.Scatter(
+            x=df_pron["fecha_dt"],
+            y=df_pron["pronostico_mxn"],
+            mode="lines+markers",
+            name=f"Pronóstico {mod_sel['nombre_modelo']} ({horizonte_sel} días)",
+            line=dict(color="#2563eb", width=3),
+            marker=dict(size=7, symbol="circle"),
+        )
+    )
+    fig_sarima.update_layout(
+        title=f"Pronóstico de Flujo de Efectivo a {horizonte_sel} Días con Banda de Confianza al 95% (Endpoint /pronostico)",
+        xaxis_title="Fecha",
+        yaxis_title="Desembolso Diario Esperado en Caja (MXN)",
+        height=440,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    )
+    st.plotly_chart(fig_sarima, use_container_width=True)
+
+    col_aic1, col_aic2 = st.columns([1.3, 1.7])
+    with col_aic1:
+        st.markdown("**Tabla de Selección de Modelos por Criterio de Akaike (AIC) y BIC:**")
+        st.dataframe(pd.DataFrame(art_arima["comparativa_candidatos_aic"]), use_container_width=True, hide_index=True)
+    with col_aic2:
+        st.markdown("**Detalle Día por Día del Pronóstico y Banda al 95% (`MXN`):**")
+        st.dataframe(
+            df_pron[["paso_h", "fecha", "dia_semana", "es_quincena", "pronostico_mxn", "ic_95_inferior", "ic_95_superior"]],
+            use_container_width=True,
+            hide_index=True,
+            height=240,
+        )
+
+with tab_e3_clf:
+    st.info(f"**Por qué importa más el Recall que la Precisión en Abarrotes 'Judith':** {art_clf['justificacion_recall_vs_precision']}")
+
+    filas_clf = []
+    for nom_m, met_m in art_clf["comparativa_4_modelos"].items():
+        mc = met_m["matriz_confusion"]
+        filas_clf.append({
+            "Modelo Clasificador": nom_m,
+            "Exactitud (Accuracy)": f"{met_m['accuracy']*100:.2f}%",
+            "Precisión (Precision)": f"{met_m['precision']*100:.2f}%",
+            "Sensibilidad (Recall)": f"{met_m['recall']*100:.2f}%",
+            "F1-Score": f"{met_m['f1_score']*100:.2f}%",
+            "ROC-AUC": f"{met_m['roc_auc']:.4f}",
+            "Matriz [TN, FP | FN, TP]": f"[{mc['TN']}, {mc['FP']} | {mc['FN']}, {mc['TP']}]",
+        })
+    st.dataframe(pd.DataFrame(filas_clf), use_container_width=True, hide_index=True)
+
+    cols_mc = st.columns(4)
+    for idx_m, (nom_m, met_m) in enumerate(art_clf["comparativa_4_modelos"].items()):
+        with cols_mc[idx_m]:
+            mat2x2 = met_m["matriz_confusion"]["matriz_2x2"]
+            fig_mc = px.imshow(
+                mat2x2,
+                text_auto=True,
+                x=["Pred: 0 (Normal)", "Pred: 1 (Alerta)"],
+                y=["Real: 0 (Normal)", "Real: 1 (Alerta)"],
+                color_continuous_scale="Blues",
+            )
+            fig_mc.update_layout(
+                title=f"{nom_m.split('(')[0].strip()}<br>F1={met_m['f1_score']*100:.1f}% · Recall={met_m['recall']*100:.1f}%",
+                coloraxis_showscale=False,
+                height=280,
+                margin=dict(l=10, r=10, t=50, b=10),
+            )
+            st.plotly_chart(fig_mc, use_container_width=True)
+
+with tab_e3_sim:
+    cs1, cs2, cs3 = st.columns(3)
+    with cs1:
+        sim_unidades = st.number_input("Unidades a recibir del proveedor:", min_value=1, max_value=500, value=95)
+        sim_precio = st.number_input("Precio unitario en catálogo (MXN):", min_value=1.0, max_value=1000.0, value=7.0, step=1.0)
+    with cs2:
+        sim_freq = st.slider("Frecuencia histórica del proveedor (visitas):", min_value=1, max_value=160, value=100)
+        sim_dia = st.selectbox("Día de la semana:", options=[(0, "Lunes"), (1, "Martes"), (2, "Miércoles"), (3, "Jueves"), (4, "Viernes"), (5, "Sábado"), (6, "Domingo")], format_func=lambda x: x[1])
+    with cs3:
+        sim_quincena = st.checkbox("¿Es día de quincena (1, 15, 30)?", value=True)
+        sim_modelo = st.selectbox("Algoritmo clasificador (`/clasificar`):", options=["campeon", "naive_bayes", "svm", "knn"])
+
+    res_sim = clasificar_transaccion_en_vivo(
+        artefacto_clf=art_clf,
+        unidades=sim_unidades,
+        precio_unitario=sim_precio,
+        frecuencia_proveedor=sim_freq,
+        dia_semana_num=sim_dia[0],
+        es_quincena=sim_quincena,
+        modelo_elegido=sim_modelo,
+    )
+    if res_sim["alerta_gasto_alto"] == 1:
+        st.error(
+            f"🚨 **{res_sim['etiqueta_negocio']}** · Probabilidad: **{res_sim['probabilidad_alerta']*100:.1f}%** "
+            f"(Monto estimado: **${res_sim['monto_estimado_mxn']:,.2f} MXN** · Modelo: `{res_sim['modelo_utilizado']}`)\n\n"
+            f"👉 **Acción recomendada:** {res_sim['recomendacion_caja']}"
+        )
+    else:
+        st.success(
+            f"✅ **{res_sim['etiqueta_negocio']}** · Probabilidad de alerta: **{res_sim['probabilidad_alerta']*100:.1f}%** "
+            f"(Monto estimado: **${res_sim['monto_estimado_mxn']:,.2f} MXN** · Modelo: `{res_sim['modelo_utilizado']}`)\n\n"
+            f"👉 **Acción recomendada:** {res_sim['recomendacion_caja']}"
+        )
+
 

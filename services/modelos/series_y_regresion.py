@@ -228,8 +228,11 @@ def prueba_adf_estacionariedad(serie: pd.Series | np.ndarray) -> Dict[str, Any]:
     y = y[~np.isnan(y)]
 
     try:
+        import warnings
         from statsmodels.tsa.stattools import adfuller
-        res = adfuller(y, autolag="AIC")
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", FutureWarning)
+            res = adfuller(y, autolag="AIC")
         stat_adf = float(res[0])
         p_val = float(res[1])
         lags_usados = int(res[2])

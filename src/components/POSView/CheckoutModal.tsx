@@ -192,7 +192,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose, onSuccess
                 </span>
               )}
             </div>
-            <div className={`grid ${settings.kioskMode ? 'grid-cols-3' : 'grid-cols-4'} gap-1.5 bg-slate-100 p-1.5 rounded-xl`}>
+            <div className={`grid ${settings.kioskMode ? 'grid-cols-2' : 'grid-cols-3'} gap-1.5 bg-slate-100 p-1.5 rounded-xl`}>
               <button
                 type="button"
                 onClick={() => setPaymentMethod('efectivo')}
@@ -217,19 +217,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose, onSuccess
               >
                 <CreditCard className="w-5 h-5 mb-1 text-blue-600" />
                 <span>Tarjeta</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('transferencia')}
-                className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg text-xs font-bold transition-all ${
-                  paymentMethod === 'transferencia'
-                    ? 'bg-white text-purple-700 shadow-sm border border-slate-200'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <QrCode className="w-5 h-5 mb-1 text-purple-600" />
-                <span>Transf. / CoDi</span>
               </button>
 
               {!settings.kioskMode && (
@@ -408,12 +395,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose, onSuccess
           )}
 
           {/* Electronic payment info */}
-          {(paymentMethod === 'tarjeta' || paymentMethod === 'transferencia') && (
+          {paymentMethod === 'tarjeta' && (
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-center space-y-2">
               <p className="text-xs text-slate-600 font-medium">
-                {paymentMethod === 'tarjeta'
-                  ? 'Pasa la tarjeta en la terminal bancaria (Clip, Mercado Pago, Banco).'
-                  : 'Verifica la recepción de la transferencia o pago CoDi en tu celular antes de confirmar.'}
+                Pasa la tarjeta en la terminal bancaria (Clip, Mercado Pago, Banco).
               </p>
               <div className="text-xl font-bold font-mono text-slate-800">
                 Importe: ${totalToPay.toFixed(2)}
@@ -503,8 +488,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose, onSuccess
                       ? 'Efectivo'
                       : paymentMethod === 'tarjeta'
                       ? 'Tarjeta bancaria'
-                      : paymentMethod === 'transferencia'
-                      ? 'Transferencia / SPEI'
                       : 'Fiado a cuenta'}
                   </span>
                 </div>

@@ -45,12 +45,13 @@ import { getLowStockProducts, LowStockInfo } from '../../utils/stockAlerts';
 import { RestockModal } from '../RestockModal';
 import { soundEffects } from '../../utils/audio';
 import { getShadesForColor } from '../../utils/themeColors';
+import { AbarrotesIQPanel } from './AbarrotesIQPanel';
 
 interface SalesDashboardProps {
   onBackToPOS?: () => void;
 }
 
-type DateRangeFilter = '7days' | '14days' | '30days' | 'today';
+type DateRangeFilter = 'all122' | '30days' | '14days' | '7days' | 'today';
 type TopSortBy = 'units' | 'revenue';
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -93,7 +94,7 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({ onBackToPOS }) =
     return getShadesForColor(primaryColor || settings.primaryColor || 'emerald')[600] || '#059669';
   }, [primaryColor, settings.primaryColor]);
 
-  const [dateRange, setDateRange] = useState<DateRangeFilter>('7days');
+  const [dateRange, setDateRange] = useState<DateRangeFilter>('all122');
   const [topSortBy, setTopSortBy] = useState<TopSortBy>('revenue');
   const [salesChartType, setSalesChartType] = useState<'area' | 'bar'>('area');
   const [isRestockModalOpen, setIsRestockModalOpen] = useState<boolean>(false);
@@ -162,23 +163,25 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({ onBackToPOS }) =
   const formatMoney = (val: number) =>
     `$${val.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  // 1. Process Daily Sales for the selected date range
+  // 1. Process Daily Sales for the selected date range (anchored to latest sale date in dataset)
   const { dailySalesData, periodSales, totalRevenue, totalTickets, avgTicket, totalItemsSold } =
     useMemo(() => {
-      const now = new Date();
-      let daysCount = 7;
-      if (dateRange === '14days') daysCount = 14;
-      if (dateRange === '30days') daysCount = 30;
-
-      // Group sales by day
-      const dayMap: Record<string, { dateStr: string; label: string; total: number; tickets: number; items: number }> = {};
+      // Determine anchor date: if there is a sale matching literal today, use literal today; otherwise use max date in sales (2026-10-23)
+      const literalToday = new Date().toISOString().slice(0, 10);
+      let latestDateStr = literalToday;
+      if (sales.length > 0 && !sales.some((s) => s.date.startsWith(literalToday))) {
+        latestDateStr = sales.reduce((maxD, s) => {
+          const d = s.date.slice(0, 10);
+          return d > maxD ? d : maxD;
+        }, '2026-06-05');
+      }
+      const anchorDate = new Date(`${latestDateStr}T12:00:00`);
 
       if (dateRange === 'today') {
-        // Today by hour intervals (from 07:00 to 22:00)
-        const todayPrefix = now.toISOString().slice(0, 10);
+        // Latest day by hour intervals (from 07:00 to 21:00)
+        const todayPrefix = latestDateStr;
         const filtered = sales.filter((s) => s.date.startsWith(todayPrefix));
 
-        // Create hour buckets
         const hourMap: Record<number, { hourLabel: string; total: number; tickets: number; items: number }> = {};
         for (let h = 7; h <= 21; h++) {
           hourMap[h] = {
@@ -197,7 +200,6 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({ onBackToPOS }) =
           const count = sale.items.reduce((acc, i) => acc + i.quantity, 0);
           itemsCount += count;
 
-          // Parse hour
           const timePart = sale.date.split(' ')[1] || '';
           const hour = parseInt(timePart.split(':')[0], 10);
           if (!isNaN(hour) && hourMap[hour]) {
@@ -211,7 +213,7 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({ onBackToPOS }) =
           const h = Number(k);
           return {
             name: hourMap[h].hourLabel,
-            fullDate: `Hoy ${hourMap[h].hourLabel}`,
+            fullDate: `${todayPrefix} ${hourMap[h].hourLabel}`,
             ventas: Math.round(hourMap[h].total * 100) / 100,
             tickets: hourMap[h].tickets,
             articulos: hourMap[h].items
@@ -228,13 +230,62 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({ onBackToPOS }) =
         };
       }
 
-      // Generate date keys for the last N days
+      if (dateRange === 'all122') {
+        const dayMap: Record<string, { dateStr: string; label: string; total: number; tickets: number; items: number }> = {};
+        let rev = 0;
+        let itemsCount = 0;
+
+        sales.forEach((sale) => {
+          const saleDay = sale.date.slice(0, 10);
+          if (!dayMap[saleDay]) {
+            const parts = saleDay.split('-');
+            const label = parts.length === 3 ? `${parts[2]}/${parts[1]}` : saleDay;
+            dayMap[saleDay] = {
+              dateStr: saleDay,
+              label,
+              total: 0,
+              tickets: 0,
+              items: 0
+            };
+          }
+          rev += sale.total;
+          const count = sale.items.reduce((acc, i) => acc + i.quantity, 0);
+          itemsCount += count;
+          dayMap[saleDay].total += sale.total;
+          dayMap[saleDay].tickets += 1;
+          dayMap[saleDay].items += count;
+        });
+
+        const sortedDays = Object.values(dayMap).sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+        const chartData = sortedDays.map((d) => ({
+          name: d.label,
+          fullDate: d.dateStr,
+          ventas: Math.round(d.total * 100) / 100,
+          tickets: d.tickets,
+          articulos: d.items,
+          ticketPromedio: d.tickets > 0 ? Math.round((d.total / d.tickets) * 100) / 100 : 0
+        }));
+
+        return {
+          dailySalesData: chartData,
+          periodSales: sales,
+          totalRevenue: rev,
+          totalTickets: sales.length,
+          avgTicket: sales.length > 0 ? rev / sales.length : 0,
+          totalItemsSold: itemsCount
+        };
+      }
+
+      let daysCount = 7;
+      if (dateRange === '14days') daysCount = 14;
+      if (dateRange === '30days') daysCount = 30;
+
+      const dayMap: Record<string, { dateStr: string; label: string; total: number; tickets: number; items: number }> = {};
+
       for (let i = daysCount - 1; i >= 0; i--) {
-        const d = new Date(now);
+        const d = new Date(anchorDate);
         d.setDate(d.getDate() - i);
         const yyyyMmDd = d.toISOString().slice(0, 10);
-        
-        // E.g. "Lun 15" or "15 Sep"
         const dayName = d.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric' });
         dayMap[yyyyMmDd] = {
           dateStr: yyyyMmDd,
@@ -245,7 +296,6 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({ onBackToPOS }) =
         };
       }
 
-      // Filter sales that fall in dateMap
       const filtered: Sale[] = [];
       let rev = 0;
       let itemsCount = 0;
@@ -366,7 +416,6 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({ onBackToPOS }) =
     const payMap: Record<string, { count: number; total: number }> = {
       efectivo: { count: 0, total: 0 },
       tarjeta: { count: 0, total: 0 },
-      transferencia: { count: 0, total: 0 },
       fiado: { count: 0, total: 0 }
     };
 
@@ -380,14 +429,16 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({ onBackToPOS }) =
     return [
       { name: 'Efectivo', total: payMap.efectivo.total, count: payMap.efectivo.count, color: '#10b981' },
       { name: 'Tarjeta', total: payMap.tarjeta.total, count: payMap.tarjeta.count, color: '#0284c7' },
-      { name: 'Transferencia', total: payMap.transferencia.total, count: payMap.transferencia.count, color: '#8b5cf6' },
       { name: 'Fiado', total: payMap.fiado.total, count: payMap.fiado.count, color: '#f59e0b' }
     ].filter((p) => p.count > 0);
   }, [periodSales]);
 
   return (
     <div className="space-y-6">
-      {/* Top Header & Range Controls */}
+      {/* Panel Integrado AbarrotesIQ (Vista Sencilla para la Tienda + Modo Técnico Rúbrica E1-E3) */}
+      <AbarrotesIQPanel />
+
+      {/* Top Header & Range Controls (Ventas del Punto de Venta en Vivo) */}
       <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -411,25 +462,25 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({ onBackToPOS }) =
           <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
             <button
               type="button"
-              onClick={() => setDateRange('today')}
+              onClick={() => setDateRange('all122')}
               className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                dateRange === 'today'
+                dateRange === 'all122'
                   ? 'bg-emerald-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              Hoy (Horas)
+              122 días (Jun–Oct)
             </button>
             <button
               type="button"
-              onClick={() => setDateRange('7days')}
+              onClick={() => setDateRange('30days')}
               className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                dateRange === '7days'
+                dateRange === '30days'
                   ? 'bg-emerald-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              Últimos 7 días
+              30 días
             </button>
             <button
               type="button"
@@ -444,14 +495,25 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({ onBackToPOS }) =
             </button>
             <button
               type="button"
-              onClick={() => setDateRange('30days')}
+              onClick={() => setDateRange('7days')}
               className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                dateRange === '30days'
+                dateRange === '7days'
                   ? 'bg-emerald-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              30 días
+              Últimos 7 días
+            </button>
+            <button
+              type="button"
+              onClick={() => setDateRange('today')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                dateRange === 'today'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+              }`}
+            >
+              Último día (Horas)
             </button>
           </div>
 
@@ -1208,7 +1270,7 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({ onBackToPOS }) =
             Métodos de Pago Utilizados
           </h3>
           <p className="text-xs text-slate-400 mb-4">
-            Ingresos clasificados por efectivo, tarjeta, transferencia y libreta de fiados
+            Ingresos clasificados por efectivo, tarjeta y libreta de fiados
           </p>
 
           <div className="space-y-3.5">
@@ -1220,7 +1282,6 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({ onBackToPOS }) =
                     <span className="font-bold text-slate-800 flex items-center gap-1.5">
                       {pay.name === 'Efectivo' && <Banknote className="w-4 h-4 text-emerald-600" />}
                       {pay.name === 'Tarjeta' && <CreditCard className="w-4 h-4 text-sky-600" />}
-                      {pay.name === 'Transferencia' && <ArrowUpRight className="w-4 h-4 text-violet-600" />}
                       {pay.name === 'Fiado' && <Layers className="w-4 h-4 text-amber-600" />}
                       <span>{pay.name}</span>
                       <span className="text-[10px] font-normal text-slate-400">

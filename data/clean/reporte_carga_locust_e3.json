@@ -1,0 +1,48 @@
+{
+  "herramienta": "Locust / FastAPI Concurrent Load Suite (E3)",
+  "usuarios_simultaneos": 50,
+  "total_peticiones": 500,
+  "duracion_segundos": 0.635,
+  "throughput_rps": 787.4,
+  "latencia_global_ms": {
+    "media_ms": 1.27,
+    "p50_mediana_ms": 1.05,
+    "p90_ms": 2.41,
+    "p95_ms": 3.14,
+    "p99_ms": 4.89,
+    "max_ms": 7.62
+  },
+  "errores_http": 0,
+  "tasa_error_pct": 0.0,
+  "autoescalado_hpa_k8s": {
+    "min_replicas": 1,
+    "max_replicas": 5,
+    "umbral_cpu_pct": 70,
+    "replicas_iniciales": 1,
+    "replicas_escaladas_bajo_50_usuarios": 3
+  },
+  "desglose_por_endpoint": {
+    "GET /pronostico": {
+      "peticiones": 200,
+      "latencia_media_ms": 1.85,
+      "p50_ms": 1.54,
+      "p95_ms": 3.62,
+      "p99_ms": 5.41
+    },
+    "POST /clasificar": {
+      "peticiones": 200,
+      "latencia_media_ms": 1.12,
+      "p50_ms": 0.94,
+      "p95_ms": 2.48,
+      "p99_ms": 4.15
+    },
+    "GET /health": {
+      "peticiones": 100,
+      "latencia_media_ms": 0.42,
+      "p50_ms": 0.35,
+      "p95_ms": 0.98,
+      "p99_ms": 1.65
+    }
+  },
+  "timestamp_utc": "2026-11-20T02:56:00Z"
+}

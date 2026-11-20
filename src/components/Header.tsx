@@ -104,10 +104,15 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onOpenGoogleShee
     return () => clearInterval(interval);
   }, []);
 
-  // Today's total sales
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const todaySales = sales.filter((s) => s.date.startsWith(todayStr));
-  const todayTotal = todaySales.reduce((sum, s) => sum + s.total, 0);
+  // Today's total sales (or latest active shift date from dataset if no sale recorded today)
+  const literalTodayStr = new Date().toISOString().slice(0, 10);
+  const shiftDateStr = cashShift.openedAt.slice(0, 10);
+  const literalTodaySales = sales.filter((s) => s.date.startsWith(literalTodayStr));
+  const activeDaySales =
+    literalTodaySales.length > 0
+      ? literalTodaySales
+      : sales.filter((s) => s.date.startsWith(shiftDateStr));
+  const todayTotal = activeDaySales.reduce((sum, s) => sum + s.total, 0);
 
   return (
     <header

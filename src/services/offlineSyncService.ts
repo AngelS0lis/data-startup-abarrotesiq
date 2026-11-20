@@ -1,9 +1,9 @@
 import { Sale, OfflineSyncItem } from '../types';
 
-const DB_NAME = 'AbarrotesPOS_DB';
+const DB_NAME = 'AbarrotesIQ_POS_DB_v3';
 const DB_VERSION = 1;
 const STORE_NAME = 'offline_sales_queue';
-const LOCAL_STORAGE_FALLBACK_KEY = 'pos_offline_sales_queue_v1';
+const LOCAL_STORAGE_FALLBACK_KEY = 'pos_offline_sales_queue_v3';
 
 /**
  * Open or initialize the IndexedDB database

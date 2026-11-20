@@ -1,0 +1,11 @@
+{
+  "registros_iniciales": 1583,
+  "duplicados_eliminados": 15,
+  "faltantes_corregidos": 18,
+  "tipos_y_formato_corregidos": 106,
+  "errores_logicos_corregidos": 14,
+  "atipicos_corregidos": 11,
+  "columnas_vacias_eliminadas": 1,
+  "registros_finales_limpios": 1568,
+  "total_correcciones_aplicadas": 164
+}

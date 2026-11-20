@@ -65,11 +65,18 @@ def sincronizar_datalake_s3() -> None:
             aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
         )
 
+        path_ventas_raw = raiz / "data" / "raw" / "ventas_abarrotes_judith.csv"
+        path_ventas_clean = raiz / "data" / "clean" / "ventas_abarrotes_limpio.csv"
+
         objetos = [
             (path_raw, "raw/gastos_abarrotes_raw.csv", "text/csv"),
             (path_clean, "clean/gastos_abarrotes_clean.csv", "text/csv"),
             (path_reporte, "clean/reporte_limpieza_e1.json", "application/json"),
         ]
+        if path_ventas_raw.exists():
+            objetos.append((path_ventas_raw, "raw/ventas_abarrotes_judith.csv", "text/csv"))
+        if path_ventas_clean.exists():
+            objetos.append((path_ventas_clean, "clean/ventas_abarrotes_limpio.csv", "text/csv"))
 
         for archivo_local, s3_key, content_type in objetos:
             s3.upload_file(

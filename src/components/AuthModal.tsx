@@ -422,18 +422,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             {/* Quick Demo Fill Buttons for Testing */}
             <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
-                Acceso Rápido de Prueba (1 Clic):
+                Cambio Rápido de Turno (1 Clic):
               </span>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   id="auth-btn-demo-admin"
                   onClick={() => handleQuickDemoLogin('admin', '1234')}
                   className="px-2.5 py-1.5 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 text-purple-900 dark:text-purple-200 border border-purple-200 dark:border-purple-800/80 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer text-left"
                 >
-                  <span className="text-base">👨‍💼</span>
+                  <span className="text-base">👩‍💼</span>
                   <div className="truncate">
-                    <span className="block font-bold truncate">Don Pancho</span>
+                    <span className="block font-bold truncate">Encargada</span>
                     <span className="text-[10px] text-purple-600 dark:text-purple-400 font-mono">Admin (1234)</span>
                   </div>
                 </button>
@@ -441,13 +441,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <button
                   type="button"
                   id="auth-btn-demo-cashier"
-                  onClick={() => handleQuickDemoLogin('maria', '2222')}
+                  onClick={() => handleQuickDemoLogin('manana', '2222')}
                   className="px-2.5 py-1.5 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-900 dark:text-blue-200 border border-blue-200 dark:border-blue-800/80 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer text-left"
                 >
-                  <span className="text-base">👩‍💼</span>
+                  <span className="text-base">☀️</span>
                   <div className="truncate">
-                    <span className="block font-bold truncate">María Gómez</span>
-                    <span className="text-[10px] text-blue-600 dark:text-blue-400 font-mono">Cajera (2222)</span>
+                    <span className="block font-bold truncate">Turno Mañana</span>
+                    <span className="text-[10px] text-blue-600 dark:text-blue-400 font-mono">PIN: 2222</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  id="auth-btn-demo-cashier-tarde"
+                  onClick={() => handleQuickDemoLogin('tarde', '3333')}
+                  className="px-2.5 py-1.5 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-800/80 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer text-left"
+                >
+                  <span className="text-base">🌇</span>
+                  <div className="truncate">
+                    <span className="block font-bold truncate">Turno Tarde</span>
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-mono">PIN: 3333</span>
                   </div>
                 </button>
               </div>

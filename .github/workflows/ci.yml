@@ -1,0 +1,38 @@
+name: AbarrotesIQ · CI/CD Pruebas de Datos y FastAPI (E3)
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "e*" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test-data-and-fastapi:
+    name: Validar Transformaciones de Datos y Endpoints FastAPI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: 3. Instalar dependencias de servicios y pruebas
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r services/tablero/requirements.txt
+          pip install httpx pytest
+
+      - name: 4. Verificar pipeline de limpieza y entrenamiento de modelos (ARIMA + 4 Clasificadores)
+        run: |
+          python services/worker/limpieza.py
+          python services/modelos/entrenar_modelos.py
+
+      - name: 5. Ejecutar suite de pruebas automatizadas (Transformaciones + Endpoints FastAPI)
+        run: |
+          pytest tests/test_limpieza.py tests/test_api_endpoints.py -v --tb=short
